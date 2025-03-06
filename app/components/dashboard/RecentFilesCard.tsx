@@ -107,7 +107,7 @@ export function RecentFilesCard({ userId, className = '' }: RecentFilesCardProps
           Recent Files
         </CardTitle>
         <CardDescription>
-          Files you've worked on recently
+          Files you&apos;ve worked on recently
         </CardDescription>
       </CardHeader>
       <CardContent>

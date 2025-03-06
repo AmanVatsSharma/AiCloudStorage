@@ -762,7 +762,7 @@ export function FileExplorer() {
             // Search results
             <>
               <div className="mb-4">
-                <h3 className="text-lg font-medium">Search results for "{searchQuery}"</h3>
+                <h3 className="text-lg font-medium">Search results for &quot;{searchQuery}&quot;</h3>
                 <button
                   onClick={() => {
                     setSearchQuery('');
@@ -781,7 +781,7 @@ export function FileExplorer() {
               ) : searchResults.length === 0 ? (
                 <div className="flex flex-col items-center justify-center h-64 text-gray-500">
                   <FiSearch className="h-12 w-12 mb-2" />
-                  <p>No files found matching "{searchQuery}"</p>
+                  <p>No files found matching &quot;{searchQuery}&quot;</p>
                 </div>
               ) : (
                 <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">

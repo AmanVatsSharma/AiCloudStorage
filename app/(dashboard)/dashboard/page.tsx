@@ -4,20 +4,7 @@ import { RecentFilesCard } from '@/app/components/dashboard/RecentFilesCard'
 import { FavoritesCard } from '@/app/components/dashboard/FavoritesCard'
 import { StatsCards } from '@/app/components/dashboard/StatsCards'
 import { 
-  Card, 
-  CardContent, 
-  CardDescription, 
-  CardHeader, 
-  CardTitle 
-} from '@/components/ui/card'
-import { 
   FiFolder, 
-  FiUsers, 
-  FiDatabase, 
-  FiClock, 
-  FiShare2, 
-  FiHardDrive, 
-  FiStar
 } from 'react-icons/fi'
 import { Button } from '@/components/ui/button'
 import Link from 'next/link'

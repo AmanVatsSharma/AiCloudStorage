@@ -8,7 +8,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { FiPlus } from 'react-icons/fi';
-import { useToast } from '@/components/ui/use-toast';
+// import { useToast } from '@/components/ui/use-toast';
 import { TeamList } from '@/app/components/teams/TeamList';
 import { TeamDialog } from '@/app/components/teams/TeamDialog';
 
@@ -18,7 +18,7 @@ export default function TeamsPage() {
   const [activeTab, setActiveTab] = useState('my-teams');
   const supabase = createClient();
   const router = useRouter();
-  const { toast } = useToast();
+//   const { toast } = useToast();
 
   useEffect(() => {
     async function checkUser() {
@@ -106,7 +106,7 @@ export default function TeamsPage() {
         <TabsContent value="joined-teams">
           <Card>
             <CardHeader>
-              <CardTitle>Teams You've Joined</CardTitle>
+              <CardTitle>Teams You&apos;ve Joined</CardTitle>
             </CardHeader>
             <CardContent>
               <TeamList userId={userId} filter="joined" />

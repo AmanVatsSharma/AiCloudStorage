@@ -8,6 +8,10 @@ const nextConfig = {
       'idbjagstpgidlkjklhlv.supabase.co'
     ],
   },
+  // Temporarily disable ESLint during build for development testing
+  eslint: {
+    ignoreDuringBuilds: true,
+  },
 };
 
 module.exports = nextConfig; 

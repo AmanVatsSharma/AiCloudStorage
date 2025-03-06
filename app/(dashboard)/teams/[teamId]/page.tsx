@@ -54,7 +54,7 @@ export default function TeamDetailPage() {
     }
     
     checkUser();
-  }, [teamId]);
+  }, [teamId, fetchTeam, router, supabase.auth]);
 
   async function fetchTeam(userId: string) {
     setLoading(true);
@@ -147,7 +147,7 @@ export default function TeamDetailPage() {
       <DashboardShell>
         <div className="flex flex-col items-center justify-center py-12">
           <h2 className="text-xl font-semibold mb-2">Team Not Found</h2>
-          <p className="text-muted-foreground mb-4">The team you're looking for does not exist or you don't have access to it.</p>
+          <p className="text-muted-foreground mb-4">The team you&apos;re looking for does not exist or you don&apos;t have access to it.</p>
           <Button onClick={handleBackToTeams}>Back to Teams</Button>
         </div>
       </DashboardShell>

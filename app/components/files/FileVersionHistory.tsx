@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { createClient } from '@/lib/supabase/client';
-import { FiClock, FiDownload, FiRotateCcw, FiTrash2, FiX } from 'react-icons/fi';
+import { FiClock, FiDownload, FiRotateCcw, FiTrash2 } from 'react-icons/fi';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/components/ui/use-toast';
 import {
