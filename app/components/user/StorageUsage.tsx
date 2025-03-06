@@ -6,10 +6,11 @@ import { User } from '@supabase/supabase-js'
 import { Database } from '@/types/supabase'
 
 type UserStorage = Database['public']['Tables']['users']['Row']
+type StorageInfo = Pick<UserStorage, 'storage_used' | 'storage_limit'>
 
 export function StorageUsage({ user }: { user: User }) {
   const supabase = createClient()
-  const [storage, setStorage] = useState<UserStorage | null>(null)
+  const [storage, setStorage] = useState<StorageInfo | null>(null)
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
@@ -17,7 +18,7 @@ export function StorageUsage({ user }: { user: User }) {
       try {
         const { data, error } = await supabase
           .from('users')
-          .select('storage_used, storage_limit')
+          .select('id, created_at, email, full_name, avatar_url, storage_used, storage_limit')
           .eq('id', user.id)
           .single()
 
