@@ -82,9 +82,9 @@
   - [ ] Webhook system
 
 ## Phase 6: Enterprise Features
-- [ ] Team management
-  - [ ] Team CRUD
-  - [ ] Member management
+- [x] Team management
+  - [x] Team CRUD
+  - [x] Member management
   - [ ] Team permissions
 - [ ] Audit system
   - [ ] Activity logging
