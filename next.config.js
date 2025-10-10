@@ -1,17 +1,6 @@
+// This file is retained for compatibility but configuration is
+// centralized in next.config.ts. Keeping this export minimal helps
+// avoid confusion in environments that prefer JS configs.
 /** @type {import('next').NextConfig} */
-const nextConfig = {
-  /* config options here */
-  images: {
-    domains: [
-      'localhost', 
-      'vwbzxklttacbrcnxbxpw.supabase.co',
-      'idbjagstpgidlkjklhlv.supabase.co'
-    ],
-  },
-  // Temporarily disable ESLint during build for development testing
-  eslint: {
-    ignoreDuringBuilds: true,
-  },
-};
-
-module.exports = nextConfig; 
+const nextConfig = {};
+module.exports = nextConfig;
