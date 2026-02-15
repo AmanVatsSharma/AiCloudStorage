@@ -16,6 +16,7 @@
 - [x] Added reliability dashboard with SLO indicator tracking and export
 - [x] Added incident response and disaster recovery runbooks
 - [x] Added reliability alert threshold baseline from audit event signals
+- [x] Added security baseline validation runbook and SQL verification script
 - [ ] Validate security baseline migration in staging and production
 
 ## Phase 1: Project Setup and Core Infrastructure

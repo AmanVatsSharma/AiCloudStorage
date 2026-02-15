@@ -88,3 +88,7 @@ flowchart TD
 3. Run smoke tests for uploads/downloads/move/copy.
 4. Apply to production during low-traffic window.
 5. Monitor auth/storage error rates for regressions.
+
+## Validation Assets
+- Runbook: `SECURITY_VALIDATION_RUNBOOK.md`
+- SQL checks: `scripts/security_baseline_validation.sql`

@@ -14,6 +14,12 @@ This module captures operational response procedures for reliability and complia
   - Backup/restore verification workflow
   - Regional outage response drill template
 
+## Alerting Inputs
+- Reliability alert baseline uses audit-event thresholds from:
+  - `app/(dashboard)/reliability/page.tsx`
+  - `lib/reliability/alerts.ts`
+- Threshold status should be reviewed during incident triage and weekly ops review.
+
 ## Operations Flowchart
 ```mermaid
 flowchart TD
