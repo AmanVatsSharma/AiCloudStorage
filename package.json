@@ -6,7 +6,15 @@
     "dev": "next dev --turbopack",
     "build": "next build",
     "start": "next start",
-    "lint": "next lint"
+    "lint": "next lint",
+    "test": "jest --passWithNoTests",
+    "test:watch": "jest --watch",
+    "security:evidence": "node supabase/scripts/generate_security_validation_evidence.mjs",
+    "security:validate": "node supabase/scripts/validate_security_baseline.mjs",
+    "security:gate": "node scripts/ops/validate_security_rollout_gate.mjs",
+    "ops:probe": "node scripts/ops/probe_endpoints.mjs",
+    "ops:validate-json": "node scripts/ops/validate_json_artifacts.mjs",
+    "ops:release-ticket": "node scripts/ops/generate_release_validation_ticket.mjs"
   },
   "dependencies": {
     "@radix-ui/react-avatar": "^1.1.3",
@@ -28,6 +36,7 @@
     "lucide-react": "^0.477.0",
     "next": "15.2.1",
     "npm": "^11.2.0",
+    "pg": "^8.18.0",
     "react": "^19.0.0",
     "react-dom": "^19.0.0",
     "react-dropzone": "^14.3.8",
@@ -36,6 +45,7 @@
   },
   "devDependencies": {
     "@eslint/eslintrc": "^3",
+    "@types/jest": "^30.0.0",
     "@types/node": "^20.17.23",
     "@types/react": "^19",
     "@types/react-dom": "^19",
@@ -43,9 +53,12 @@
     "clsx": "^2.1.1",
     "eslint": "^9",
     "eslint-config-next": "15.2.1",
+    "jest": "^30.2.0",
+    "jest-environment-jsdom": "^30.2.0",
     "postcss": "^8.4.36",
     "tailwindcss": "^3.3.0",
     "tailwindcss-animate": "^1.0.7",
+    "ts-jest": "^29.4.6",
     "typescript": "^5"
   }
 }

@@ -1,0 +1,67 @@
+{
+  "metadata": {
+    "environment": "staging",
+    "dateTimeUtc": "2026-02-15T00:00:00.000Z",
+    "validator": "",
+    "approver": "",
+    "changeTicket": "",
+    "migrationSet": [
+      "20260215_security_baseline.sql",
+      "20260215_audit_events.sql",
+      "20260215_organization_foundation.sql",
+      "20260215_organization_member_management.sql",
+      "20260215_organization_invitation_acceptance.sql"
+    ]
+  },
+  "sqlVerification": {
+    "script": "supabase/scripts/security_baseline_validation.sql",
+    "summary": {
+      "rlsState": { "pass": 0, "fail": 0, "notes": "" },
+      "helperFunctions": { "pass": 0, "fail": 0, "notes": "" },
+      "forbiddenPolicies": { "pass": 0, "fail": 0, "notes": "" },
+      "storagePrefixPolicies": { "pass": 0, "fail": 0, "notes": "" }
+    }
+  },
+  "functionalSmoke": [
+    {
+      "scenario": "User A reads own files only",
+      "expected": "Allowed",
+      "actual": "",
+      "status": "PASS",
+      "evidenceRef": ""
+    },
+    {
+      "scenario": "User B cannot read User A files",
+      "expected": "Denied",
+      "actual": "",
+      "status": "PASS",
+      "evidenceRef": ""
+    },
+    {
+      "scenario": "Audit event writes",
+      "expected": "Logged",
+      "actual": "",
+      "status": "PASS",
+      "evidenceRef": ""
+    }
+  ],
+  "regressionMetrics": {
+    "authErrorRate": { "baseline": "", "current": "", "delta": "", "status": "" },
+    "storageErrorRate": { "baseline": "", "current": "", "delta": "", "status": "" },
+    "dbPermissionErrors": { "baseline": "", "current": "", "delta": "", "status": "" }
+  },
+  "decision": {
+    "goNoGo": "GO",
+    "decisionOwner": "",
+    "timestampUtc": "",
+    "rationale": ""
+  },
+  "followUpActions": [
+    {
+      "action": "",
+      "owner": "",
+      "dueDate": "",
+      "priority": "medium"
+    }
+  ]
+}

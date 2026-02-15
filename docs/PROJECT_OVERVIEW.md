@@ -1,113 +1,72 @@
-# AI-Powered Cloud Storage Platform
+# AI Cloud Storage Platform — Project Overview
 
-## Project Overview
-An enterprise-level cloud storage platform enhanced with AI capabilities, providing intelligent storage solutions for businesses and developers. The platform combines advanced file management with AI-powered features for content analysis, automation, and intelligent organization.
+## Product Vision
+Build an enterprise-ready storage SaaS that combines:
+- secure multi-tenant file management,
+- team collaboration and governance,
+- AI-powered storage intelligence.
 
-## Core Features
+The current repository has moved from prototype to **hardening phase** with
+security, reliability, and architecture cleanup as top priority.
 
-### 1. Intelligent Storage Management
-- Smart file organization using AI
-- Automatic content categorization
-- Intelligent search with natural language processing
-- Content summarization and insights
-- Duplicate detection with content awareness
-- File type conversion and optimization
+---
 
-### 2. AI-Powered Features
-- Document analysis and text extraction
-- Image recognition and tagging
-- Video content analysis
-- Audio transcription
-- Code analysis and suggestions
-- Automated metadata generation
-- Content moderation
+## Implemented Today
 
-### 3. Developer Platform
-- RESTful API access
-- GraphQL API (via Supabase)
-- Custom storage buckets
-- Webhooks and integrations
-- SDK support for multiple languages
-- API key management
-- Usage analytics and monitoring
+### Core platform
+- Authentication (email/password + OAuth)
+- Dashboard shell with protected routes
+- File explorer with:
+  - upload (button and drag-drop),
+  - folder management,
+  - move/copy/delete actions,
+  - file preview,
+  - share dialog,
+  - tags and version history UI hooks
+- Team management:
+  - team create/edit/delete,
+  - member list and invite dialogs
 
-### 4. Enterprise Features
-- Team collaboration tools
-- Role-based access control (RBAC)
-- Audit logging and compliance
-- Data retention policies
-- Backup and disaster recovery
-- Custom workflows and automation
-- SSO integration
+### Hardening already completed
+- Canonical Supabase type model across app modules
+- Structured logging (`lib/logger.ts`) and shared error utilities (`lib/errors.ts`)
+- Initial test baseline (Jest unit tests for core utilities)
+- Enterprise route placeholders to avoid dead navigation paths
+- Security baseline SQL migration with least-privilege RLS and storage prefix isolation
+- Audit logging foundation migration + frontend tracker (`lib/audit.ts`)
 
-### 5. Security Features
-- End-to-end encryption
-- Multi-factor authentication
-- IP whitelisting
-- Access control lists
-- Security compliance tools
-- Threat detection
-- Data loss prevention
+---
 
-### 6. AI Workflow Automation
-- Custom workflow creation
-- Trigger-based actions
-- Content processing pipelines
-- Scheduled tasks
-- Integration with external AI services
-- Custom model deployment
+## In Progress (Enterprise Transformation)
 
-## Technical Stack
+### Security and governance
+- Enforce hardened RLS/storage policies in staging and production
+- Expand policy validation tests
+- Mature sharing controls (domain restrictions, approvals, stronger policy model)
 
-### Frontend (Next.js)
-- React 18 with Server Components
-- TailwindCSS for styling
-- TypeScript
-- Real-time updates with WebSocket
-- Progressive Web App support
+### Identity and access
+- Organization/workspace model
+- Fine-grained RBAC/ABAC and delegated admin controls
+- SSO/SAML/SCIM-ready architecture
 
-### Backend (NestJS)
-- TypeScript
-- GraphQL with Supabase
-- REST API endpoints
-- WebSocket support
-- Task queuing system
-- Caching layer
+### Audit and compliance
+- Audit event explorer UI
+- Export/reporting flows
+- Retention and legal hold controls
 
-### Database & Storage
-- PostgreSQL (via Supabase)
-- AWS S3 for file storage
-- Redis for caching
-- ElasticSearch for search
+### AI differentiation
+- Async AI pipeline services
+- classification, semantic search, and auto-tagging
+- policy-aware AI processing controls
 
-### AI Services
-- OpenAI for text analysis
-- AWS Rekognition for image/video
-- Custom ML models
-- TensorFlow.js for client-side AI
+---
 
-### Infrastructure
-- Docker containerization
-- Kubernetes orchestration
-- CI/CD pipeline
-- Monitoring and logging
-- Auto-scaling support
+## Technical Stack (Current)
+- **Frontend**: Next.js (App Router), React, TypeScript, Tailwind CSS
+- **Backend services**: Supabase (Auth, Postgres, Storage, RPC)
+- **Testing**: Jest unit test baseline
+- **Observability (app-level)**: structured client/server logs + audit event RPC foundation
 
-## Integration Points
-- Email services
-- Payment processing
-- Analytics platforms
-- External AI services
-- Authentication providers
-- CDN services
-- Monitoring tools 
-
-## Architecture Note (Updated)
-
-While the project was initially planned with a full NestJS backend, our current implementation leverages Supabase for authentication, database, and storage needs. Going forward, we recommend a hybrid approach that:
-
-1. Continues using Supabase for authentication, database, and basic storage
-2. Introduces a NestJS backend specifically for AI processing and advanced features
-3. Implements a phased migration to incorporate NestJS without disrupting existing functionality
-
-This architecture provides the optimal balance between maintaining development velocity with Supabase and enabling the advanced AI capabilities that define our platform. For detailed architecture information, please refer to ARCHITECTURE.md. 
+For architecture details and phased direction, see:
+- `docs/ARCHITECTURE.md`
+- `docs/ROADMAP.md`

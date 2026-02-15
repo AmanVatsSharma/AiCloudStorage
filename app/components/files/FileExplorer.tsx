@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { useDropzone } from 'react-dropzone';
 import { FiFolder, FiFile, FiArrowLeft, FiUpload, FiPlus, FiMoreVertical, FiCopy, FiMove, FiTrash2, FiShare2, FiSearch, FiClock, FiTag } from 'react-icons/fi';
 import { createClient } from '@/lib/supabase/client';
@@ -12,6 +12,16 @@ import { FileTags } from './FileTags';
 import { FileSearch } from './FileSearch';
 import { useToast } from '@/components/ui/use-toast';
 import { PostgrestError } from '@supabase/supabase-js';
+import { getUserErrorMessage } from '@/lib/errors';
+import { logger } from '@/lib/logger';
+import { trackAuditEvent } from '@/lib/audit';
+import {
+  applyFileSearchFilters,
+  FileSearchRequestInput,
+  hasActiveSearchCriteria,
+  normalizeFileSearchRequest,
+} from '@/lib/files/search';
+import { buildVersionObjectPath, getNextVersionNumber } from '@/lib/files/versioning';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -27,15 +37,18 @@ type FileItem = {
   type: string;
   path: string;
   created_at: string;
+  updated_at?: string;
   parent_id: string | null;
   is_folder: boolean;
+  is_trashed?: boolean;
+  metadata?: unknown;
 };
 
 // This component will handle generating and displaying thumbnails
 const FileThumbnail = ({ file }: { file: FileItem }) => {
   const [thumbnailUrl, setThumbnailUrl] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
-  const supabase = createClient();
+  const supabase = useMemo(() => createClient(), []);
 
   useEffect(() => {
     // Skip for non-image files
@@ -116,7 +129,7 @@ const FileThumbnail = ({ file }: { file: FileItem }) => {
   }
   
   // For other file types, determine what icon to show based on type
-  let FileIcon = FiFile;
+  const FileIcon = FiFile;
   let iconColor = "text-blue-400";
   let bgColor = "bg-blue-50";
   
@@ -157,9 +170,17 @@ export function FileExplorer() {
   const [isShareDialogOpen, setIsShareDialogOpen] = useState(false);
   const [fileToShare, setFileToShare] = useState<FileItem | null>(null);
   const [moveOperation, setMoveOperation] = useState<'move' | 'copy'>('move');
-  const supabase = createClient();
+  const supabase = useMemo(() => createClient(), []);
   const { toast } = useToast();
-  const [searchQuery, setSearchQuery] = useState('');
+  const [searchRequest, setSearchRequest] = useState(() =>
+    normalizeFileSearchRequest({
+      query: '',
+      filters: {
+        itemScope: 'all',
+        category: 'all',
+      },
+    })
+  );
   const [searchResults, setSearchResults] = useState<FileItem[]>([]);
   const [isSearching, setIsSearching] = useState(false);
   const [isVersionHistoryOpen, setIsVersionHistoryOpen] = useState(false);
@@ -167,15 +188,26 @@ export function FileExplorer() {
   const [isTagsDialogOpen, setIsTagsDialogOpen] = useState(false);
   const [fileForTags, setFileForTags] = useState<FileItem | null>(null);
   const [userId, setUserId] = useState<string | null>(null);
+  const [traceId] = useState(() => `file-explorer_${Date.now()}`);
 
   // Get the authenticated user ID on component mount
   useEffect(() => {
     const getUserId = async () => {
       const { data: { session } } = await supabase.auth.getSession();
       if (session?.user) {
+        logger.info({
+          traceId,
+          scope: "file-explorer",
+          message: "Resolved authenticated user for file operations.",
+          data: { userId: session.user.id },
+        });
         setUserId(session.user.id);
       } else {
-        console.error("No authenticated user found");
+        logger.warn({
+          traceId,
+          scope: "file-explorer",
+          message: "No authenticated user found while mounting explorer.",
+        });
         toast({
           title: 'Authentication Error',
           description: 'Please log in to manage files',
@@ -184,8 +216,177 @@ export function FileExplorer() {
       }
     };
     
-    getUserId();
-  }, [supabase, toast]);
+    void getUserId();
+  }, [supabase, toast, traceId]);
+
+  const getFilePath = useCallback(
+    (fileName: string) => `${userId}/${currentFolder || 'root'}/${fileName}`,
+    [currentFolder, userId]
+  );
+
+  /**
+   * Resolve an existing non-trashed file with same name in current folder.
+   */
+  const findExistingFileRecord = useCallback(
+    async (fileName: string) => {
+      if (!userId) return null;
+
+      let query = supabase
+        .from('files')
+        .select('id, name, path, size')
+        .eq('user_id', userId)
+        .eq('name', fileName)
+        .eq('is_folder', false)
+        .eq('is_trashed', false);
+
+      query = currentFolder === null ? query.is('parent_id', null) : query.eq('parent_id', currentFolder);
+      const { data, error } = await query.order('updated_at', { ascending: false }).limit(1).maybeSingle();
+
+      // PGRST116 can occur for "no rows"; this is expected for new files.
+      if (error && error.code !== 'PGRST116') throw error;
+      return data;
+    },
+    [currentFolder, supabase, userId]
+  );
+
+  /**
+   * Persist current object snapshot before overwriting an existing file.
+   */
+  const archiveCurrentFileVersion = useCallback(
+    async (record: { id: string; name: string; path: string | null; size: number }) => {
+      if (!record.path) {
+        throw new Error('Cannot archive version: existing file path is empty.');
+      }
+
+      const { data: versionRows, error: versionError } = await supabase
+        .from('file_versions')
+        .select('version')
+        .eq('file_id', record.id)
+        .order('version', { ascending: false })
+        .limit(1);
+
+      if (versionError) throw versionError;
+      const latestVersion = versionRows?.[0]?.version ?? 0;
+      const nextVersion = getNextVersionNumber(latestVersion);
+      const versionObjectPath = buildVersionObjectPath(record.id, nextVersion, record.name);
+
+      const { error: copyError } = await supabase.storage
+        .from('files')
+        .copy(record.path, versionObjectPath);
+
+      if (copyError) throw copyError;
+
+      const { error: insertError } = await supabase.from('file_versions').insert({
+        file_id: record.id,
+        version: nextVersion,
+        size: record.size,
+      });
+
+      if (insertError) {
+        // Best-effort rollback to avoid orphaned archived object.
+        await supabase.storage.from('files').remove([versionObjectPath]);
+        throw insertError;
+      }
+
+      return nextVersion;
+    },
+    [supabase]
+  );
+
+  const uploadSingleFile = useCallback(
+    async (file: File, source: 'drop' | 'picker', positionLabel: string) => {
+      if (!userId) {
+        throw new Error('Authenticated user is required for uploads.');
+      }
+
+      const filePath = getFilePath(file.name);
+      const existingRecord = await findExistingFileRecord(file.name);
+      let archivedVersion: number | null = null;
+
+      logger.debug({
+        traceId,
+        scope: 'file-explorer-upload',
+        message: 'Preparing file upload request.',
+        data: {
+          source,
+          positionLabel,
+          fileName: file.name,
+          filePath,
+          currentFolder,
+          hasExistingRecord: Boolean(existingRecord),
+        },
+      });
+
+      if (existingRecord) {
+        archivedVersion = await archiveCurrentFileVersion(existingRecord);
+        logger.info({
+          traceId,
+          scope: 'file-explorer-upload',
+          message: 'Archived prior file version before overwrite.',
+          data: {
+            fileId: existingRecord.id,
+            fileName: existingRecord.name,
+            archivedVersion,
+          },
+        });
+      }
+
+      const { error: uploadError } = await supabase.storage
+        .from('files')
+        .upload(filePath, file, { upsert: true });
+      if (uploadError) throw uploadError;
+
+      if (existingRecord) {
+        const { error: updateError } = await supabase
+          .from('files')
+          .update({
+            size: file.size,
+            type: file.type,
+            path: filePath,
+            updated_at: new Date().toISOString(),
+            is_trashed: false,
+            trashed_at: null,
+          })
+          .eq('id', existingRecord.id)
+          .eq('user_id', userId);
+
+        if (updateError) throw updateError;
+      } else {
+        const { error: insertError } = await supabase.from('files').insert({
+          name: file.name,
+          size: file.size,
+          type: file.type,
+          path: filePath,
+          parent_id: currentFolder,
+          is_folder: false,
+          user_id: userId,
+        });
+
+        if (insertError) throw insertError;
+      }
+
+      await trackAuditEvent({
+        action: existingRecord ? 'file.upload.overwrite' : 'file.upload.create',
+        resourceType: 'file',
+        resourceId: existingRecord?.id,
+        details: {
+          source,
+          fileName: file.name,
+          filePath,
+          archivedVersion,
+        },
+      });
+    },
+    [
+      archiveCurrentFileVersion,
+      currentFolder,
+      findExistingFileRecord,
+      getFilePath,
+      supabase,
+      traceId,
+      userId,
+    ]
+  );
 
   // Drag and drop functionality
   const onDrop = useCallback(async (acceptedFiles: File[]) => {
@@ -204,68 +405,55 @@ export function FileExplorer() {
     setIsUploading(true);
     
     try {
+      let successCount = 0;
       for (let i = 0; i < acceptedFiles.length; i++) {
         const file = acceptedFiles[i];
-        
-        // Use consistent path format that worked in the test function
-        const filePath = `${userId}/${currentFolder || 'root'}/${file.name}`;
-        console.log(`Drag-drop uploading file ${i+1}/${acceptedFiles.length}: ${file.name} to ${filePath}`);
-        
-        // Upload file to storage - simplified approach
-        const { data: uploadData, error: uploadError } = await supabase.storage
-          .from('files')
-          .upload(filePath, file, { upsert: true });
-        
-        if (uploadError) {
-          console.error("Upload error:", uploadError);
+        try {
+          await uploadSingleFile(file, 'drop', `${i + 1}/${acceptedFiles.length}`);
+          successCount += 1;
+        } catch (uploadError: unknown) {
+          logger.error({
+            traceId,
+            scope: "file-explorer-upload",
+            message: "Dropped file upload failed.",
+            data: {
+              fileName: file.name,
+              error: uploadError instanceof Error ? uploadError.message : uploadError,
+            },
+          });
           toast({
             title: 'Upload Failed',
-            description: uploadError.message,
+            description: getUserErrorMessage(uploadError, `Failed to upload ${file.name}`),
             variant: 'destructive',
           });
-          continue; // Try the next file if there is one
         }
-        
-        // Create database entry
-        const { error: dbError } = await supabase.from('files').insert({
-          name: file.name,
-          size: file.size,
-          type: file.type,
-          path: filePath,
-          parent_id: currentFolder,
-          is_folder: false,
-          user_id: userId,
-        });
-        
-        if (dbError) {
-          console.error("Database error:", dbError);
-          toast({
-            title: 'Database Error',
-            description: dbError.message,
-            variant: 'destructive',
-          });
-          continue;
-        }
-        
+      }
+
+      if (successCount > 0) {
+        fetchFiles(currentFolder);
         toast({
-          title: 'Success',
-          description: `${file.name} uploaded successfully`,
+          title: 'Upload complete',
+          description: `${successCount} file(s) uploaded successfully.`,
         });
       }
-      
-      fetchFiles(currentFolder);
     } catch (error: unknown) {
-      const err = error as Error;
-      console.error("File upload error:", error);
+      logger.error({
+        traceId,
+        scope: "file-explorer-upload",
+        message: "Unexpected error during dropped file upload.",
+        data: { error: error instanceof Error ? error.message : error },
+      });
       toast({
         title: 'Error',
-        description: err.message || 'Failed to upload files',
+        description: getUserErrorMessage(error, 'Failed to upload files'),
         variant: 'destructive',
       });
     } finally {
       setIsUploading(false);
     }
-  }, [currentFolder, supabase, toast, userId]);
+  // fetchFiles is intentionally omitted to avoid unstable callback loops.
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [currentFolder, toast, traceId, uploadSingleFile, userId]);
   
   const { getRootProps, getInputProps, isDragActive } = useDropzone({ 
     onDrop,
@@ -274,10 +462,23 @@ export function FileExplorer() {
   });
 
   const fetchFiles = useCallback(async (parentId: string | null = null) => {
+    if (!userId) {
+      logger.warn({
+        traceId,
+        scope: "file-explorer-fetch",
+        message: "Skipped file fetch because user ID is missing.",
+        data: { parentId },
+      });
+      setFiles([]);
+      return;
+    }
+
     try {
       let query = supabase
         .from('files')
-        .select('*');
+        .select('*')
+        .eq('user_id', userId)
+        .eq('is_trashed', false);
       
       // Use "is" for null checks instead of "eq"
       if (parentId === null) {
@@ -292,18 +493,36 @@ export function FileExplorer() {
         .order('name');
 
       if (error) throw error;
+      logger.debug({
+        traceId,
+        scope: "file-explorer-fetch",
+        message: "Fetched files for folder context.",
+        data: {
+          parentId,
+          resultCount: data?.length ?? 0,
+        },
+      });
       setFiles(data || []);
       // Clear selected files when changing folders
       setSelectedFiles([]);
     } catch (error: unknown) {
       const pgError = error as PostgrestError;
+      logger.error({
+        traceId,
+        scope: "file-explorer-fetch",
+        message: "Failed to fetch files.",
+        data: {
+          parentId,
+          error: pgError.message,
+        },
+      });
       toast({
         title: 'Error',
         description: pgError.message || 'Failed to fetch files',
         variant: 'destructive',
       });
     }
-  }, [supabase, toast]);
+  }, [supabase, toast, traceId, userId]);
 
   useEffect(() => {
     fetchFiles(currentFolder);
@@ -363,62 +582,47 @@ export function FileExplorer() {
     setIsUploading(true);
     
     try {
+      let successCount = 0;
       for (let i = 0; i < uploadFiles.length; i++) {
         const file = uploadFiles[i];
-        
-        // Use consistent path format that worked in the test function
-        const filePath = `${userId}/${currentFolder || 'root'}/${file.name}`;
-        console.log(`Uploading file ${i+1}/${uploadFiles.length}: ${file.name} to ${filePath}`);
-        
-        // Upload file to storage - simplified approach
-        const { data: uploadData, error: uploadError } = await supabase.storage
-          .from('files')
-          .upload(filePath, file, { upsert: true });
-        
-        if (uploadError) {
-          console.error("Upload error:", uploadError);
+        try {
+          await uploadSingleFile(file, 'picker', `${i + 1}/${uploadFiles.length}`);
+          successCount += 1;
+        } catch (uploadError: unknown) {
+          logger.error({
+            traceId,
+            scope: "file-explorer-upload",
+            message: "Storage upload failed for selected file.",
+            data: {
+              fileName: file.name,
+              error: uploadError instanceof Error ? uploadError.message : uploadError,
+            },
+          });
           toast({
             title: 'Upload Failed',
-            description: uploadError.message,
+            description: getUserErrorMessage(uploadError, `Failed to upload ${file.name}`),
             variant: 'destructive',
           });
-          continue; // Try the next file if there is one
         }
-        
-        // Create database entry
-        const { error: dbError } = await supabase.from('files').insert({
-          name: file.name,
-          size: file.size,
-          type: file.type,
-          path: filePath,
-          parent_id: currentFolder,
-          is_folder: false,
-          user_id: userId,
-        });
-        
-        if (dbError) {
-          console.error("Database error:", dbError);
-          toast({
-            title: 'Database Error',
-            description: dbError.message,
-            variant: 'destructive',
-          });
-          continue;
-        }
-        
+      }
+
+      if (successCount > 0) {
+        fetchFiles(currentFolder);
         toast({
-          title: 'Success',
-          description: `${file.name} uploaded successfully`,
+          title: 'Upload complete',
+          description: `${successCount} file(s) uploaded successfully.`,
         });
       }
-      
-      fetchFiles(currentFolder);
     } catch (error: unknown) {
-      const err = error as Error;
-      console.error("File upload error:", error);
+      logger.error({
+        traceId,
+        scope: "file-explorer-upload",
+        message: "Unexpected error during selected file upload.",
+        data: { error: error instanceof Error ? error.message : error },
+      });
       toast({
         title: 'Error',
-        description: err.message || 'Failed to upload files',
+        description: getUserErrorMessage(error, 'Failed to upload files'),
         variant: 'destructive',
       });
     } finally {
@@ -473,41 +677,63 @@ export function FileExplorer() {
 
   const handleDeleteFiles = async () => {
     if (selectedFiles.length === 0) return;
+    if (!userId) {
+      toast({
+        title: 'Authentication Error',
+        description: 'User session is required to move files to trash.',
+        variant: 'destructive',
+      });
+      return;
+    }
     
     const confirmDelete = window.confirm(`Are you sure you want to delete ${selectedFiles.length} item(s)?`);
     if (!confirmDelete) return;
     
     try {
       for (const file of selectedFiles) {
-        // Delete from database
+        // Soft delete in database (Trash lifecycle).
         const { error: dbError } = await supabase
           .from('files')
-          .delete()
-          .eq('id', file.id);
+          .update({
+            is_trashed: true,
+            trashed_at: new Date().toISOString(),
+            updated_at: new Date().toISOString(),
+          })
+          .eq('id', file.id)
+          .eq('user_id', userId);
         
         if (dbError) throw dbError;
-        
-        // If it's a file (not a folder), delete from storage
-        if (!file.is_folder) {
-          const { error: storageError } = await supabase.storage
-            .from('files')
-            .remove([file.path]);
-          
-          if (storageError) throw storageError;
-        }
       }
+
+      await trackAuditEvent({
+        action: 'file.trash.move',
+        resourceType: 'file',
+        details: {
+          count: selectedFiles.length,
+          fileIds: selectedFiles.map((file) => file.id),
+        },
+      });
       
       fetchFiles(currentFolder);
       setSelectedFiles([]);
       toast({
         title: 'Success',
-        description: 'Files deleted successfully',
+        description: 'Items moved to trash successfully',
       });
     } catch (error: unknown) {
-      const err = error as Error;
+      logger.error({
+        traceId,
+        scope: "file-explorer-delete",
+        message: "Failed to move files to trash.",
+        data: {
+          currentFolder,
+          selectedCount: selectedFiles.length,
+          error: error instanceof Error ? error.message : error,
+        },
+      });
       toast({
         title: 'Error',
-        description: err.message || 'Failed to delete files',
+        description: getUserErrorMessage(error, 'Failed to move files to trash'),
         variant: 'destructive',
       });
     }
@@ -528,30 +754,71 @@ export function FileExplorer() {
     return selectedFiles.some(f => f.id === file.id);
   };
 
-  const handleSearch = async (query: string) => {
-    setSearchQuery(query);
+  const handleSearch = async (input: FileSearchRequestInput) => {
+    const normalizedRequest = normalizeFileSearchRequest(input);
+    setSearchRequest(normalizedRequest);
     
-    if (!query.trim()) {
+    if (!hasActiveSearchCriteria(normalizedRequest)) {
       setIsSearching(false);
       setSearchResults([]);
       return;
     }
     
+    if (!userId) {
+      toast({
+        title: 'Authentication Error',
+        description: 'User session is required to search files.',
+        variant: 'destructive',
+      });
+      setSearchResults([]);
+      return;
+    }
+
     setIsSearching(true);
     
     try {
-      const { data, error } = await supabase
+      let queryBuilder = supabase
         .from('files')
         .select('*')
-        .ilike('name', `%${query}%`)
+        .eq('user_id', userId)
+        .eq('is_trashed', false);
+
+      // Indexed filters are pushed to the database query for efficiency.
+      if (normalizedRequest.query) {
+        queryBuilder = queryBuilder.ilike('name', `%${normalizedRequest.query}%`);
+      }
+      if (normalizedRequest.filters.itemScope === 'files') {
+        queryBuilder = queryBuilder.eq('is_folder', false);
+      } else if (normalizedRequest.filters.itemScope === 'folders') {
+        queryBuilder = queryBuilder.eq('is_folder', true);
+      }
+      if (normalizedRequest.filters.updatedAfter) {
+        queryBuilder = queryBuilder.gte('updated_at', `${normalizedRequest.filters.updatedAfter}T00:00:00.000Z`);
+      }
+      if (normalizedRequest.filters.updatedBefore) {
+        queryBuilder = queryBuilder.lte('updated_at', `${normalizedRequest.filters.updatedBefore}T23:59:59.999Z`);
+      }
+
+      const { data, error } = await queryBuilder
         .order('is_folder', { ascending: false })
         .order('name');
       
       if (error) throw error;
-      
-      setSearchResults(data || []);
+
+      const filteredResults = applyFileSearchFilters((data as FileItem[] | null) || [], normalizedRequest);
+      setSearchResults(filteredResults);
     } catch (error: unknown) {
       const pgError = error as PostgrestError;
+      logger.error({
+        traceId,
+        scope: "file-explorer-search",
+        message: "File search failed.",
+        data: {
+          query: normalizedRequest.query,
+          filters: normalizedRequest.filters,
+          error: pgError.message,
+        },
+      });
       toast({
         title: 'Error',
         description: pgError.message || 'Failed to search files',
@@ -574,81 +841,6 @@ export function FileExplorer() {
   const handleManageTags = (file: FileItem) => {
     setFileForTags(file);
     setIsTagsDialogOpen(true);
-  };
-
-  // Simple test function for direct file upload to diagnose issues
-  const testFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    console.log("File upload triggered");
-    const files = e.target.files;
-    if (!files || files.length === 0) {
-      console.log("No files selected");
-      return;
-    }
-
-    try {
-      console.log(`Selected ${files.length} file(s) to upload:`, 
-        Array.from(files).map(f => f.name).join(', '));
-      
-      // Check user ID
-      if (!userId) {
-        console.error("No user ID available");
-        alert("User ID not available. Please log in again.");
-        return;
-      }
-      console.log("User ID:", userId);
-      
-      // Upload the first file as a test
-      const file = files[0];
-      console.log("Attempting to upload:", file.name, file.size, "bytes");
-      
-      // Direct path to avoid any complexity
-      const filePath = `test/${userId}/${file.name}`;
-      console.log("Uploading to path:", filePath);
-      
-      // Direct storage upload with minimal complexity
-      const { data, error } = await supabase.storage
-        .from('files')
-        .upload(filePath, file, { upsert: true });
-      
-      if (error) {
-        console.error("UPLOAD ERROR:", error);
-        alert(`Upload failed: ${error.message}`);
-        return;
-      }
-      
-      console.log("UPLOAD SUCCESS:", data);
-      alert(`File ${file.name} uploaded successfully!`);
-      
-      // Now try to insert the database record
-      const { data: dbData, error: dbError } = await supabase
-        .from('files')
-        .insert({
-          name: file.name,
-          size: file.size,
-          type: file.type,
-          path: filePath,
-          parent_id: currentFolder,
-          is_folder: false,
-          user_id: userId
-        })
-        .select();
-      
-      if (dbError) {
-        console.error("DATABASE ERROR:", dbError);
-        alert(`Database entry failed: ${dbError.message}`);
-        return;
-      }
-      
-      console.log("DATABASE SUCCESS:", dbData);
-      alert("Database entry created successfully!");
-      
-      // Refresh file list
-      fetchFiles(currentFolder);
-      
-    } catch (err) {
-      console.error("UNEXPECTED ERROR:", err);
-      alert(`An unexpected error occurred: ${err}`);
-    }
   };
 
   // Helper function to format file sizes
@@ -758,14 +950,26 @@ export function FileExplorer() {
 
         {/* File grid */}
         <div className="flex-1 p-4 overflow-auto">
-          {searchQuery ? (
+          {hasActiveSearchCriteria(searchRequest) ? (
             // Search results
             <>
               <div className="mb-4">
-                <h3 className="text-lg font-medium">Search results for &quot;{searchQuery}&quot;</h3>
+                <h3 className="text-lg font-medium">
+                  {searchRequest.query
+                    ? `Search results for "${searchRequest.query}"`
+                    : 'Search results for advanced filters'}
+                </h3>
                 <button
                   onClick={() => {
-                    setSearchQuery('');
+                    setSearchRequest(
+                      normalizeFileSearchRequest({
+                        query: '',
+                        filters: {
+                          itemScope: 'all',
+                          category: 'all',
+                        },
+                      })
+                    );
                     setSearchResults([]);
                   }}
                   className="text-sm text-primary hover:underline"
@@ -781,7 +985,7 @@ export function FileExplorer() {
               ) : searchResults.length === 0 ? (
                 <div className="flex flex-col items-center justify-center h-64 text-gray-500">
                   <FiSearch className="h-12 w-12 mb-2" />
-                  <p>No files found matching &quot;{searchQuery}&quot;</p>
+                  <p>No files found matching the selected criteria.</p>
                 </div>
               ) : (
                 <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">

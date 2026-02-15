@@ -29,13 +29,13 @@
 - Optimize component rendering
 - Follow accessibility guidelines
 
-### 4. NestJS Standards
-- Follow modular architecture
-- Use dependency injection
-- Implement proper exception filters
-- Use pipes for data transformation
-- Implement proper validation
-- Use interceptors for cross-cutting concerns
+### 4. Next.js API Standards
+- Follow modular architecture for route handlers and service utilities
+- Keep API business logic in reusable lib/service modules
+- Implement robust request validation and typed payload contracts
+- Use centralized error handling and structured logging
+- Apply consistent auth/session guard patterns in server handlers
+- Keep route handlers thin; delegate to domain-focused utilities
 - Follow RESTful API conventions
 
 ## Error Handling

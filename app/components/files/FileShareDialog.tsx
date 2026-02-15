@@ -23,6 +23,9 @@ import {
 } from '@/components/ui/select';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Label } from '@/components/ui/label';
+import { getUserErrorMessage } from '@/lib/errors';
+import { logger } from '@/lib/logger';
+import { trackAuditEvent } from '@/lib/audit';
 
 type FileItem = {
   id: string;
@@ -57,6 +60,8 @@ export function FileShareDialog({
   const [shareLink, setShareLink] = useState<string>('');
   const [isLoading, setIsLoading] = useState(false);
   const [isLinkGenerated, setIsLinkGenerated] = useState(false);
+  const [userId, setUserId] = useState<string | null>(null);
+  const [traceId] = useState(() => `file-share-dialog_${Date.now()}`);
   const [shareSettings, setShareSettings] = useState<ShareSettings>({
     isPublic: true,
     expiresAt: null,
@@ -65,8 +70,29 @@ export function FileShareDialog({
     accessLevel: 'view',
   });
   
-  const supabase = createClient();
+  const supabase = React.useMemo(() => createClient(), []);
   const { toast } = useToast();
+
+  useEffect(() => {
+    const resolveUser = async () => {
+      const { data, error } = await supabase.auth.getUser();
+      if (error || !data.user) {
+        logger.warn({
+          traceId,
+          scope: "file-share-dialog",
+          message: "Failed to resolve user for sharing flow.",
+          data: {
+            error: error?.message,
+          },
+        });
+        setUserId(null);
+        return;
+      }
+      setUserId(data.user.id);
+    };
+
+    void resolveUser();
+  }, [supabase, traceId]);
 
   useEffect(() => {
     if (isOpen) {
@@ -86,11 +112,16 @@ export function FileShareDialog({
     setIsLoading(true);
 
     try {
+      if (!userId) {
+        throw new Error("Authentication required to create share links.");
+      }
+
       // Create a sharing record in the database
       const { data, error } = await supabase
         .from('shared_files')
         .insert({
           file_id: file.id,
+          owner_id: userId,
           is_public: shareSettings.isPublic,
           expires_at: shareSettings.expiresAt,
           password: shareSettings.password,
@@ -114,12 +145,44 @@ export function FileShareDialog({
         title: 'Share link generated',
         description: 'Your file share link has been created successfully',
       });
+
+      await trackAuditEvent({
+        action: 'file.share.create',
+        resourceType: 'file',
+        resourceId: file.id,
+        details: {
+          shareId,
+          isPublic: shareSettings.isPublic,
+          accessLevel: shareSettings.accessLevel,
+        },
+      });
     } catch (error: unknown) {
-      const err = error as Error;
+      logger.error({
+        traceId,
+        scope: "file-share-dialog",
+        message: "Failed to generate share link.",
+        data: {
+          fileId: file.id,
+          userId,
+          error: error instanceof Error ? error.message : error,
+        },
+      });
       toast({
         title: 'Error',
-        description: err.message || 'Failed to generate share link',
+        description: getUserErrorMessage(error, 'Failed to generate share link'),
         variant: 'destructive',
+      });
+
+      await trackAuditEvent({
+        action: 'file.share.create',
+        resourceType: 'file',
+        resourceId: file.id,
+        status: 'failure',
+        details: {
+          isPublic: shareSettings.isPublic,
+          accessLevel: shareSettings.accessLevel,
+          reason: error instanceof Error ? error.message : String(error),
+        },
       });
     } finally {
       setIsLoading(false);

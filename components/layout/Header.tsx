@@ -19,6 +19,8 @@ import { FiBell, FiUser, FiLogOut, FiSettings, FiHelpCircle } from 'react-icons/
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
+import { logger } from '@/lib/logger';
+import { trackAuditEvent } from '@/lib/audit';
 
 interface HeaderProps {
   children?: React.ReactNode;
@@ -27,11 +29,71 @@ interface HeaderProps {
 export function Header({ children }: HeaderProps) {
   const router = useRouter();
   const { toast } = useToast();
-  const supabase = createClient();
+  const supabase = React.useMemo(() => createClient(), []);
+  const [traceId] = React.useState(() => `header_${Date.now()}`);
+  const [userMeta, setUserMeta] = React.useState<{
+    email: string;
+    fullName: string;
+    avatarUrl: string | null;
+  }>({
+    email: 'user@example.com',
+    fullName: 'User',
+    avatarUrl: '/placeholder-user.jpg',
+  });
+
+  React.useEffect(() => {
+    const loadUserMeta = async () => {
+      try {
+        const { data: userData, error: userError } = await supabase.auth.getUser();
+        if (userError || !userData.user) return;
+
+        const fallbackName = userData.user.email?.split("@")[0] ?? "User";
+        const fallbackEmail = userData.user.email ?? "user@example.com";
+
+        const { data: profileData } = await supabase
+          .from('profiles')
+          .select('full_name, avatar_url')
+          .eq('id', userData.user.id)
+          .single();
+
+        setUserMeta({
+          email: fallbackEmail,
+          fullName: profileData?.full_name || fallbackName,
+          avatarUrl: profileData?.avatar_url || '/placeholder-user.jpg',
+        });
+      } catch (error: unknown) {
+        logger.warn({
+          traceId,
+          scope: "header",
+          message: "Failed to resolve profile metadata in header.",
+          data: {
+            error: error instanceof Error ? error.message : error,
+          },
+        });
+      }
+    };
+
+    void loadUserMeta();
+  }, [supabase, traceId]);
 
   const handleSignOut = async () => {
     try {
+      const { data: userData } = await supabase.auth.getUser();
+      await trackAuditEvent({
+        action: 'auth.signout',
+        resourceType: 'user',
+        resourceId: userData.user?.id,
+        details: {
+          entrypoint: 'header-menu',
+        },
+      });
+
       await supabase.auth.signOut();
+      logger.info({
+        traceId,
+        scope: "header",
+        message: "User signed out.",
+      });
       toast({
         title: 'Signed out',
         description: 'You have been signed out successfully.',
@@ -83,17 +145,17 @@ export function Header({ children }: HeaderProps) {
               <DropdownMenuTrigger asChild>
                 <Button variant="ghost" className="relative h-9 w-9 rounded-full">
                   <Avatar className="h-9 w-9">
-                    <AvatarImage src="/placeholder-user.jpg" alt="User" />
-                    <AvatarFallback>US</AvatarFallback>
+                    <AvatarImage src={userMeta.avatarUrl || '/placeholder-user.jpg'} alt={userMeta.fullName} />
+                    <AvatarFallback>{userMeta.fullName.slice(0, 2).toUpperCase()}</AvatarFallback>
                   </Avatar>
                 </Button>
               </DropdownMenuTrigger>
               <DropdownMenuContent className="w-56" align="end" forceMount>
                 <DropdownMenuLabel className="font-normal">
                   <div className="flex flex-col space-y-1">
-                    <p className="text-sm font-medium leading-none">User Name</p>
+                    <p className="text-sm font-medium leading-none">{userMeta.fullName}</p>
                     <p className="text-xs leading-none text-muted-foreground">
-                      user@example.com
+                      {userMeta.email}
                     </p>
                   </div>
                 </DropdownMenuLabel>

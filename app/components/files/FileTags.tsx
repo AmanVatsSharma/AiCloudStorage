@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useCallback, useMemo, useState, useEffect } from 'react';
 import { createClient } from '@/lib/supabase/client';
 import { useToast } from '@/components/ui/use-toast';
 import { 
@@ -13,6 +13,8 @@ import {
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { FiX, FiPlus, FiTag } from 'react-icons/fi';
+import { getUserErrorMessage } from '@/lib/errors';
+import { logger } from '@/lib/logger';
 
 interface Tag {
   id: string;
@@ -39,8 +41,9 @@ export function FileTags({ fileId, isOpen, onClose }: FileTagsProps) {
   const [availableTags, setAvailableTags] = useState<Tag[]>([]);
   const [newTagName, setNewTagName] = useState('');
   const [selectedColor, setSelectedColor] = useState('#3B82F6');
-  const supabase = createClient();
+  const supabase = useMemo(() => createClient(), []);
   const { toast } = useToast();
+  const [traceId] = useState(() => `file-tags_${Date.now()}`);
 
   const colors = [
     '#EF4444', // red
@@ -53,13 +56,7 @@ export function FileTags({ fileId, isOpen, onClose }: FileTagsProps) {
     '#EC4899', // pink
   ];
 
-  useEffect(() => {
-    if (isOpen) {
-      fetchData();
-    }
-  }, [isOpen, fileId]);
-
-  const fetchData = async () => {
+  const fetchData = useCallback(async () => {
     setLoading(true);
     try {
       // Fetch all tags
@@ -79,16 +76,31 @@ export function FileTags({ fileId, isOpen, onClose }: FileTagsProps) {
 
       setAvailableTags(allTags || []);
       setFileTags(fileTagsData || []);
-    } catch (error: any) {
+    } catch (error: unknown) {
+      logger.error({
+        traceId,
+        scope: "file-tags",
+        message: "Failed to fetch tags for file.",
+        data: {
+          fileId,
+          error: error instanceof Error ? error.message : error,
+        },
+      });
       toast({
         title: 'Error',
-        description: error.message || 'Failed to load tags',
+        description: getUserErrorMessage(error, 'Failed to load tags'),
         variant: 'destructive',
       });
     } finally {
       setLoading(false);
     }
-  };
+  }, [fileId, supabase, toast, traceId]);
+
+  useEffect(() => {
+    if (isOpen) {
+      void fetchData();
+    }
+  }, [fetchData, isOpen]);
 
   const createTag = async () => {
     if (!newTagName.trim()) return;
@@ -114,10 +126,20 @@ export function FileTags({ fileId, isOpen, onClose }: FileTagsProps) {
         title: 'Success',
         description: 'Tag created successfully',
       });
-    } catch (error: any) {
+    } catch (error: unknown) {
+      logger.error({
+        traceId,
+        scope: "file-tags",
+        message: "Failed to create tag.",
+        data: {
+          fileId,
+          tagName: newTagName,
+          error: error instanceof Error ? error.message : error,
+        },
+      });
       toast({
         title: 'Error',
-        description: error.message || 'Failed to create tag',
+        description: getUserErrorMessage(error, 'Failed to create tag'),
         variant: 'destructive',
       });
     }
@@ -165,10 +187,20 @@ export function FileTags({ fileId, isOpen, onClose }: FileTagsProps) {
           description: 'Tag added to file',
         });
       }
-    } catch (error: any) {
+    } catch (error: unknown) {
+      logger.error({
+        traceId,
+        scope: "file-tags",
+        message: "Failed to toggle tag association for file.",
+        data: {
+          fileId,
+          tagId,
+          error: error instanceof Error ? error.message : error,
+        },
+      });
       toast({
         title: 'Error',
-        description: error.message || 'Failed to update file tags',
+        description: getUserErrorMessage(error, 'Failed to update file tags'),
         variant: 'destructive',
       });
     }

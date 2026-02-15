@@ -1,0 +1,53 @@
+{
+  "generatedAt": "2026-02-15T19:00:00.000Z",
+  "environment": "staging",
+  "overallStatus": "PASS",
+  "checks": {
+    "rlsState": {
+      "rows": [
+        {
+          "table_name": "files",
+          "rls_enabled": true,
+          "result": "PASS"
+        }
+      ],
+      "pass": true
+    },
+    "helperFunctions": {
+      "rows": [
+        {
+          "function_name": "log_audit_event",
+          "result": "PASS"
+        }
+      ],
+      "pass": true
+    },
+    "forbiddenPolicies": {
+      "rows": [
+        {
+          "policy_name": "Temporary full access to files for authenticated users",
+          "result": "PASS"
+        }
+      ],
+      "pass": true
+    },
+    "storagePrefixPolicies": {
+      "rows": [
+        {
+          "policyname": "storage_objects_select_own_prefix",
+          "result": "PASS"
+        }
+      ],
+      "pass": true,
+      "details": [
+        {
+          "policyname": "storage_objects_select_own_prefix",
+          "tablename": "objects",
+          "cmd": "SELECT",
+          "qual": "(bucket_id = 'files'::text)",
+          "with_check": null
+        }
+      ]
+    }
+  }
+}

@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import { createClient } from '@/lib/supabase/client';
 import { useToast } from '@/components/ui/use-toast';
 import { FiUserPlus } from 'react-icons/fi';
@@ -16,6 +16,9 @@ import {
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { getUserErrorMessage } from '@/lib/errors';
+import { logger } from '@/lib/logger';
+import { trackAuditEvent } from '@/lib/audit';
 
 interface InviteMemberDialogProps {
   teamId: string;
@@ -35,8 +38,9 @@ export function InviteMemberDialog({
   const [open, setOpen] = useState(false);
   const [email, setEmail] = useState('');
   const [loading, setLoading] = useState(false);
-  const supabase = createClient();
+  const supabase = useMemo(() => createClient(), []);
   const { toast } = useToast();
+  const [traceId] = useState(() => `invite-member_${Date.now()}`);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -54,7 +58,7 @@ export function InviteMemberDialog({
     
     try {
       // Use the database function to add a team member
-      const { data, error } = await supabase
+      const { error } = await supabase
         .rpc('add_team_member', {
           p_team_id: teamId,
           p_user_id: userId,
@@ -76,6 +80,17 @@ export function InviteMemberDialog({
         title: 'Success',
         description: `User added to ${teamName}`,
       });
+
+      await trackAuditEvent({
+        action: 'team.member.add',
+        resourceType: 'team',
+        resourceId: teamId,
+        details: {
+          invitedEmail: email.toLowerCase(),
+          actorId: userId,
+        },
+        teamId,
+      });
       
       // Reset and close
       setEmail('');
@@ -84,12 +99,35 @@ export function InviteMemberDialog({
       if (onSuccess) {
         onSuccess();
       }
-    } catch (error: any) {
-      console.error('Error inviting member:', error);
+    } catch (error: unknown) {
+      logger.error({
+        traceId,
+        scope: "invite-member-dialog",
+        message: "Failed to invite member.",
+        data: {
+          teamId,
+          userId,
+          email,
+          error: error instanceof Error ? error.message : error,
+        },
+      });
       toast({
         title: 'Error',
-        description: error.message || 'Failed to invite member',
+        description: getUserErrorMessage(error, 'Failed to invite member'),
         variant: 'destructive',
+      });
+
+      await trackAuditEvent({
+        action: 'team.member.add',
+        resourceType: 'team',
+        resourceId: teamId,
+        status: 'failure',
+        details: {
+          invitedEmail: email.toLowerCase(),
+          actorId: userId,
+          reason: error instanceof Error ? error.message : String(error),
+        },
+        teamId,
       });
     } finally {
       setLoading(false);

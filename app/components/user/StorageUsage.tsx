@@ -1,38 +1,57 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import { User } from '@supabase/supabase-js'
-import { Database } from '@/types/supabase'
+import { getUserErrorMessage } from '@/lib/errors'
+import { logger } from '@/lib/logger'
+import { useToast } from '@/components/ui/use-toast'
 
-type UserStorage = Database['public']['Tables']['users']['Row']
-type StorageInfo = Pick<UserStorage, 'storage_used' | 'storage_limit'>
+type StorageInfo = {
+  storage_used: number
+  storage_limit: number
+}
 
 export function StorageUsage({ user }: { user: User }) {
-  const supabase = createClient()
+  const supabase = useMemo(() => createClient(), [])
+  const { toast } = useToast()
   const [storage, setStorage] = useState<StorageInfo | null>(null)
   const [loading, setLoading] = useState(true)
+  const [traceId] = useState(() => `storage-usage_${Date.now()}`)
 
   useEffect(() => {
     async function fetchStorageInfo() {
       try {
         const { data, error } = await supabase
-          .from('users')
-          .select('id, created_at, email, full_name, avatar_url, storage_used, storage_limit')
+          .from('profiles')
+          .select('storage_used, storage_limit')
           .eq('id', user.id)
           .single()
 
         if (error) throw error
         setStorage(data)
-      } catch (error) {
-        console.error('Error fetching storage info:', error)
+      } catch (error: unknown) {
+        logger.error({
+          traceId,
+          scope: "storage-usage",
+          message: "Failed to fetch storage usage details.",
+          data: {
+            userId: user.id,
+            error: error instanceof Error ? error.message : error,
+          },
+        })
+        toast({
+          title: 'Storage metrics unavailable',
+          description: getUserErrorMessage(error, 'Unable to load storage usage right now.'),
+          variant: 'destructive',
+        })
       } finally {
         setLoading(false)
       }
     }
 
-    fetchStorageInfo()
-  }, [user.id])
+    void fetchStorageInfo()
+  }, [supabase, toast, traceId, user.id])
 
   if (loading) {
     return <div className="animate-pulse h-24 bg-gray-200 rounded-lg"></div>

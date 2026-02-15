@@ -1,8 +1,8 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo, useCallback } from 'react';
 import { createClient } from '@/lib/supabase/client';
-import { FiUser, FiUserX, FiUserCheck, FiMail } from 'react-icons/fi';
+import { FiUser, FiUserX, FiUserCheck } from 'react-icons/fi';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/components/ui/use-toast';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
@@ -14,6 +14,16 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table';
+import { getUserErrorMessage } from '@/lib/errors';
+import { logger } from '@/lib/logger';
+import {
+  assignableRolesFor,
+  canChangeMemberRole,
+  canInviteMembers,
+  canManageTeam,
+  canRemoveMember,
+  TeamRole,
+} from '@/lib/authorization/team-permissions';
 
 interface Member {
   id: string;
@@ -26,6 +36,11 @@ interface Member {
   avatar_url?: string;
 }
 
+function normalizeRole(role: string): TeamRole {
+  if (role === 'owner' || role === 'admin') return role;
+  return 'member';
+}
+
 interface MemberListProps {
   teamId: string;
   isOwner: boolean;
@@ -35,14 +50,16 @@ interface MemberListProps {
 export function MemberList({ teamId, isOwner, userId }: MemberListProps) {
   const [members, setMembers] = useState<Member[]>([]);
   const [loading, setLoading] = useState(true);
-  const supabase = createClient();
+  const supabase = useMemo(() => createClient(), []);
   const { toast } = useToast();
+  const [traceId] = useState(() => `member-list_${Date.now()}`);
+  const actorRole: TeamRole = (() => {
+    if (isOwner) return 'owner';
+    const selfMembership = members.find((member) => member.user_id === userId);
+    return normalizeRole(selfMembership?.role ?? 'member');
+  })();
 
-  useEffect(() => {
-    fetchMembers();
-  }, [teamId]);
-
-  async function fetchMembers() {
+  const fetchMembers = useCallback(async () => {
     setLoading(true);
     try {
       // Use the database function to get team members
@@ -53,7 +70,16 @@ export function MemberList({ teamId, isOwner, userId }: MemberListProps) {
         });
 
       if (error) {
-        console.error('Error fetching team members:', error);
+        logger.error({
+          traceId,
+          scope: "member-list",
+          message: "Failed to fetch team members.",
+          data: {
+            teamId,
+            userId,
+            error: error.message,
+          },
+        });
         toast({
           title: 'Error',
           description: 'Failed to load team members',
@@ -63,17 +89,30 @@ export function MemberList({ teamId, isOwner, userId }: MemberListProps) {
       }
 
       setMembers(data || []);
-    } catch (error) {
-      console.error('Error fetching team members:', error);
+    } catch (error: unknown) {
+      logger.error({
+        traceId,
+        scope: "member-list",
+        message: "Unexpected error while fetching team members.",
+        data: {
+          teamId,
+          userId,
+          error: error instanceof Error ? error.message : error,
+        },
+      });
       toast({
         title: 'Error',
-        description: 'Failed to load team members',
+        description: getUserErrorMessage(error, 'Failed to load team members'),
         variant: 'destructive',
       });
     } finally {
       setLoading(false);
     }
-  }
+  }, [supabase, teamId, toast, traceId, userId]);
+
+  useEffect(() => {
+    void fetchMembers();
+  }, [fetchMembers]);
 
   async function handleRemoveMember(memberId: string) {
     if (!isOwner) return;
@@ -84,7 +123,7 @@ export function MemberList({ teamId, isOwner, userId }: MemberListProps) {
 
     try {
       // Use the database function to remove a team member
-      const { data, error } = await supabase
+      const { error } = await supabase
         .rpc('remove_team_member', {
           p_team_id: teamId,
           p_user_id: userId,
@@ -100,11 +139,21 @@ export function MemberList({ teamId, isOwner, userId }: MemberListProps) {
 
       // Refresh the member list
       fetchMembers();
-    } catch (error) {
-      console.error('Error removing member:', error);
+    } catch (error: unknown) {
+      logger.error({
+        traceId,
+        scope: "member-list",
+        message: "Failed to remove team member.",
+        data: {
+          teamId,
+          memberId,
+          userId,
+          error: error instanceof Error ? error.message : error,
+        },
+      });
       toast({
         title: 'Error',
-        description: 'Failed to remove member',
+        description: getUserErrorMessage(error, 'Failed to remove member'),
         variant: 'destructive',
       });
     }
@@ -113,7 +162,18 @@ export function MemberList({ teamId, isOwner, userId }: MemberListProps) {
   // Note: We'll need to create a new database function for changing member roles
   // But for now, we'll keep this function as is and it will be updated later
   async function handleChangeMemberRole(memberId: string, newRole: string) {
-    if (!isOwner) return;
+    const target = members.find((member) => member.id === memberId);
+    const targetRole = normalizeRole(target?.role ?? 'member');
+    const desiredRole = normalizeRole(newRole);
+
+    if (!canChangeMemberRole(actorRole, targetRole, desiredRole)) {
+      toast({
+        title: 'Permission denied',
+        description: 'You are not allowed to change this member role.',
+        variant: 'destructive',
+      });
+      return;
+    }
 
     try {
       const { error } = await supabase
@@ -130,11 +190,22 @@ export function MemberList({ teamId, isOwner, userId }: MemberListProps) {
 
       // Refresh the member list
       fetchMembers();
-    } catch (error) {
-      console.error('Error updating member role:', error);
+    } catch (error: unknown) {
+      logger.error({
+        traceId,
+        scope: "member-list",
+        message: "Failed to update member role.",
+        data: {
+          teamId,
+          memberId,
+          newRole,
+          userId,
+          error: error instanceof Error ? error.message : error,
+        },
+      });
       toast({
         title: 'Error',
-        description: 'Failed to update member role',
+        description: getUserErrorMessage(error, 'Failed to update member role'),
         variant: 'destructive',
       });
     }
@@ -158,7 +229,7 @@ export function MemberList({ teamId, isOwner, userId }: MemberListProps) {
         <p className="text-gray-500 mb-6">
           Invite people to collaborate with you
         </p>
-        {isOwner && (
+        {canInviteMembers(actorRole) && (
           <Button>
             <FiUserCheck className="mr-2 h-4 w-4" />
             Invite Members
@@ -178,7 +249,7 @@ export function MemberList({ teamId, isOwner, userId }: MemberListProps) {
             <TableHead>Email</TableHead>
             <TableHead>Role</TableHead>
             <TableHead>Joined</TableHead>
-            {isOwner && <TableHead className="text-right">Actions</TableHead>}
+            {canManageTeam(actorRole) && <TableHead className="text-right">Actions</TableHead>}
           </TableRow>
         </TableHeader>
         <TableBody>
@@ -195,22 +266,24 @@ export function MemberList({ teamId, isOwner, userId }: MemberListProps) {
               <TableCell className="font-medium">{member.full_name || 'Unknown'}</TableCell>
               <TableCell>{member.email || 'No email'}</TableCell>
               <TableCell>
-                {isOwner ? (
+                {canManageTeam(actorRole) && normalizeRole(member.role) !== 'owner' ? (
                   <select 
                     value={member.role}
                     onChange={(e) => handleChangeMemberRole(member.id, e.target.value)}
                     className="p-1 border rounded text-sm"
                   >
-                    <option value="member">Member</option>
-                    <option value="admin">Admin</option>
-                    <option value="owner">Owner</option>
+                    {assignableRolesFor(actorRole).map((role) => (
+                      <option key={role} value={role}>
+                        {role.charAt(0).toUpperCase() + role.slice(1)}
+                      </option>
+                    ))}
                   </select>
                 ) : (
                   <span>{member.role}</span>
                 )}
               </TableCell>
               <TableCell>{new Date(member.created_at).toLocaleDateString()}</TableCell>
-              {isOwner && (
+              {canRemoveMember(actorRole, normalizeRole(member.role), userId, member.user_id) && (
                 <TableCell className="text-right">
                   <Button 
                     variant="ghost" 

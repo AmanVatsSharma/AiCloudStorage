@@ -1,10 +1,12 @@
 'use client';
 
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { FiFolder, FiArrowLeft } from 'react-icons/fi';
 import { createClient } from '@/lib/supabase/client';
 import { useToast } from '@/components/ui/use-toast';
 import { PostgrestError } from '@supabase/supabase-js';
+import { getUserErrorMessage } from '@/lib/errors';
+import { logger } from '@/lib/logger';
 import {
   Dialog,
   DialogContent,
@@ -48,15 +50,45 @@ export function FileMoveDialog({
     { id: null, name: 'Root' },
   ]);
   const [isLoading, setIsLoading] = useState(false);
-  const supabase = createClient();
+  const [userId, setUserId] = useState<string | null>(null);
+  const [traceId] = useState(() => `file-move-dialog_${Date.now()}`);
+  const supabase = useMemo(() => createClient(), []);
   const { toast } = useToast();
 
+  useEffect(() => {
+    const resolveUser = async () => {
+      const { data, error } = await supabase.auth.getUser();
+      if (error || !data.user) {
+        logger.warn({
+          traceId,
+          scope: "file-move-dialog",
+          message: "Unable to resolve authenticated user for move/copy.",
+          data: {
+            error: error?.message,
+          },
+        });
+        setUserId(null);
+        return;
+      }
+      setUserId(data.user.id);
+    };
+
+    void resolveUser();
+  }, [supabase, traceId]);
+
   const fetchFolders = useCallback(async (parentId: string | null = null) => {
+    if (!userId) {
+      setFolders([]);
+      return;
+    }
+
     try {
       let query = supabase
         .from('files')
         .select('*')
         .eq('is_folder', true)
+        .eq('user_id', userId)
+        .eq('is_trashed', false)
         .order('name');
       
       if (parentId === null) {
@@ -68,16 +100,34 @@ export function FileMoveDialog({
       const { data, error } = await query;
 
       if (error) throw error;
+      logger.debug({
+        traceId,
+        scope: "file-move-dialog",
+        message: "Fetched folders for move/copy destination.",
+        data: {
+          parentId,
+          resultCount: data?.length ?? 0,
+        },
+      });
       setFolders(data || []);
     } catch (error: unknown) {
       const pgError = error as PostgrestError;
+      logger.error({
+        traceId,
+        scope: "file-move-dialog",
+        message: "Failed to fetch target folders.",
+        data: {
+          parentId,
+          error: pgError.message,
+        },
+      });
       toast({
         title: 'Error',
         description: pgError.message || 'Failed to fetch folders',
         variant: 'destructive',
       });
     }
-  }, [supabase, toast]);
+  }, [supabase, toast, userId, traceId]);
 
   useEffect(() => {
     if (isOpen) {
@@ -123,19 +173,24 @@ export function FileMoveDialog({
     setIsLoading(true);
 
     try {
+      if (!userId) {
+        throw new Error("User ID not available. Please sign in again.");
+      }
+
       for (const file of selectedFiles) {
         if (operation === 'move') {
           // Update the file's parent_id
           const { error } = await supabase
             .from('files')
             .update({ parent_id: targetFolder })
-            .eq('id', file.id);
+            .eq('id', file.id)
+            .eq('user_id', userId);
 
           if (error) throw error;
 
           // If it's a file (not a folder), update the storage path
           if (!file.is_folder) {
-            const newPath = `${targetFolder || 'root'}/${file.name}`;
+            const newPath = `${userId}/${targetFolder || 'root'}/${file.name}`;
             const oldPath = file.path;
 
             // Copy the file to the new location
@@ -157,7 +212,8 @@ export function FileMoveDialog({
               const { error: updateError } = await supabase
                 .from('files')
                 .update({ path: newPath })
-                .eq('id', file.id);
+                .eq('id', file.id)
+                .eq('user_id', userId);
 
               if (updateError) throw updateError;
 
@@ -179,7 +235,8 @@ export function FileMoveDialog({
               type: file.type,
               parent_id: targetFolder,
               is_folder: file.is_folder,
-              path: file.is_folder ? null : `${targetFolder || 'root'}/Copy of ${file.name}`,
+              path: file.is_folder ? null : `${userId}/${targetFolder || 'root'}/Copy of ${file.name}`,
+              user_id: userId,
             })
             .select()
             .single();
@@ -193,7 +250,7 @@ export function FileMoveDialog({
               .download(file.path);
 
             if (fileData) {
-              const newPath = `${targetFolder || 'root'}/Copy of ${file.name}`;
+              const newPath = `${userId}/${targetFolder || 'root'}/Copy of ${file.name}`;
               
               const { error: uploadError } = await supabase.storage
                 .from('files')
@@ -213,10 +270,20 @@ export function FileMoveDialog({
       onComplete();
       onClose();
     } catch (error: unknown) {
-      const err = error as Error;
+      logger.error({
+        traceId,
+        scope: "file-move-dialog",
+        message: "Move/copy operation failed.",
+        data: {
+          operation,
+          selectedCount: selectedFiles.length,
+          targetFolder,
+          error: error instanceof Error ? error.message : error,
+        },
+      });
       toast({
         title: 'Error',
-        description: err.message || `Failed to ${operation} files`,
+        description: getUserErrorMessage(error, `Failed to ${operation} files`),
         variant: 'destructive',
       });
     } finally {

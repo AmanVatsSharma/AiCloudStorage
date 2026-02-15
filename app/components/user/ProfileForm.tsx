@@ -1,19 +1,67 @@
 'use client'
 
-import { useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { User } from '@supabase/supabase-js'
-import { Database } from '@/types/supabase'
 import { createClient } from '@/lib/supabase/client'
+import { useToast } from '@/components/ui/use-toast'
+import { getUserErrorMessage } from '@/lib/errors'
+import { logger } from '@/lib/logger'
+import Image from 'next/image'
 
-type Profile = Database['public']['Tables']['users']['Row']
+type Profile = {
+  full_name: string | null
+  avatar_url: string | null
+}
 
 export function ProfileForm({ user }: { user: User }) {
-  const supabase = createClient()
+  const supabase = useMemo(() => createClient(), [])
+  const { toast } = useToast()
   const [loading, setLoading] = useState(false)
+  const [isFetchingProfile, setIsFetchingProfile] = useState(true)
+  const [traceId] = useState(() => `profile-form_${Date.now()}`)
   const [profile, setProfile] = useState<Partial<Profile>>({
     full_name: '',
     avatar_url: '',
   })
+
+  useEffect(() => {
+    const fetchProfile = async () => {
+      setIsFetchingProfile(true)
+      try {
+        const { data, error } = await supabase
+          .from('profiles')
+          .select('full_name, avatar_url')
+          .eq('id', user.id)
+          .single()
+
+        if (error) throw error
+
+        setProfile({
+          full_name: data?.full_name ?? '',
+          avatar_url: data?.avatar_url ?? '',
+        })
+      } catch (error: unknown) {
+        logger.error({
+          traceId,
+          scope: "profile-form",
+          message: "Failed to fetch profile record.",
+          data: {
+            userId: user.id,
+            error: error instanceof Error ? error.message : error,
+          },
+        })
+        toast({
+          title: 'Error loading profile',
+          description: getUserErrorMessage(error, 'Unable to load your profile.'),
+          variant: 'destructive',
+        })
+      } finally {
+        setIsFetchingProfile(false)
+      }
+    }
+
+    void fetchProfile()
+  }, [supabase, traceId, toast, user.id])
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -21,7 +69,7 @@ export function ProfileForm({ user }: { user: User }) {
 
     try {
       const { error } = await supabase
-        .from('users')
+        .from('profiles')
         .update({
           full_name: profile.full_name,
           avatar_url: profile.avatar_url,
@@ -30,9 +78,25 @@ export function ProfileForm({ user }: { user: User }) {
         .eq('id', user.id)
 
       if (error) throw error
-      // Show success message
-    } catch (error) {
-      // Show error message
+      toast({
+        title: 'Profile updated',
+        description: 'Your profile changes have been saved.',
+      })
+    } catch (error: unknown) {
+      logger.error({
+        traceId,
+        scope: "profile-form",
+        message: "Profile update failed.",
+        data: {
+          userId: user.id,
+          error: error instanceof Error ? error.message : error,
+        },
+      })
+      toast({
+        title: 'Update failed',
+        description: getUserErrorMessage(error, 'Unable to save profile changes.'),
+        variant: 'destructive',
+      })
     } finally {
       setLoading(false)
     }
@@ -57,9 +121,30 @@ export function ProfileForm({ user }: { user: User }) {
         .getPublicUrl(filePath)
 
       setProfile(prev => ({ ...prev, avatar_url: publicUrl }))
-    } catch (error) {
-      // Show error message
+      toast({
+        title: 'Avatar uploaded',
+        description: 'Your profile avatar has been updated.',
+      })
+    } catch (error: unknown) {
+      logger.error({
+        traceId,
+        scope: "profile-form",
+        message: "Avatar upload failed.",
+        data: {
+          userId: user.id,
+          error: error instanceof Error ? error.message : error,
+        },
+      })
+      toast({
+        title: 'Avatar upload failed',
+        description: getUserErrorMessage(error, 'Unable to upload avatar.'),
+        variant: 'destructive',
+      })
     }
+  }
+
+  if (isFetchingProfile) {
+    return <div className="animate-pulse h-24 bg-gray-200 rounded-lg"></div>
   }
 
   return (
@@ -69,9 +154,11 @@ export function ProfileForm({ user }: { user: User }) {
           Profile Picture
         </label>
         <div className="mt-1 flex items-center space-x-4">
-          <img
-            src={profile.avatar_url || '/default-avatar.png'}
+          <Image
+            src={profile.avatar_url || '/placeholder-user.jpg'}
             alt="Profile"
+            width={48}
+            height={48}
             className="h-12 w-12 rounded-full object-cover"
           />
           <input

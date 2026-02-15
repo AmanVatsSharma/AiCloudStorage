@@ -29,8 +29,26 @@ To learn more about Next.js, take a look at the following resources:
 
 You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
 
+## Demo Credentials (Temporary)
+
+For quick QA walkthroughs, the login screen now includes a **Use Demo Account** action:
+
+- Email: `demo@gmail.com`
+- Password: `Password@123`
+
+The flow will attempt sign-in first and, if missing, auto-provision the demo user via Supabase auth signup.
+
 ## Deploy on Vercel
 
 The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
 
 Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+
+### Required production environment variables
+- `NEXT_PUBLIC_SUPABASE_URL`
+- `NEXT_PUBLIC_SUPABASE_ANON_KEY`
+- `SUPABASE_SERVICE_ROLE_KEY` (required for storage admin and integration APIs)
+- `OPENAI_API_KEY` (required for AI summarization)
+
+Detailed deployment runbook:
+- `docs/DEPLOYMENT.md`

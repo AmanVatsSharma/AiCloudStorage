@@ -23,6 +23,10 @@ import {
   FiMenu,
   FiX,
   FiUsers,
+  FiShield,
+  FiBriefcase,
+  FiCpu,
+  FiActivity,
 } from 'react-icons/fi'
 import Link from 'next/link'
 import { cn } from '@/lib/utils'
@@ -53,6 +57,11 @@ const sidebarItems = [
     icon: FiUsers,
   },
   {
+    title: 'Organizations',
+    href: '/organizations',
+    icon: FiBriefcase,
+  },
+  {
     title: 'Favorites',
     href: '/favorites',
     icon: FiStar,
@@ -66,6 +75,26 @@ const sidebarItems = [
     title: 'Analytics',
     href: '/analytics',
     icon: FiPieChart,
+  },
+  {
+    title: 'AI Tools',
+    href: '/ai-tools',
+    icon: FiCpu,
+  },
+  {
+    title: 'Audit',
+    href: '/audit',
+    icon: FiShield,
+  },
+  {
+    title: 'Compliance',
+    href: '/compliance',
+    icon: FiShield,
+  },
+  {
+    title: 'Reliability',
+    href: '/reliability',
+    icon: FiActivity,
   },
   {
     title: 'Profile',

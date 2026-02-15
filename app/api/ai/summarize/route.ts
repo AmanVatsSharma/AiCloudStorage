@@ -1,0 +1,177 @@
+import { NextRequest, NextResponse } from 'next/server';
+import { logger } from '@/lib/logger';
+import { summarizeTextHeuristic, truncateForModel } from '@/lib/ai/summarizer';
+import { estimateAiUsage } from '@/lib/ai/cost-estimator';
+import { applySlidingWindowLimit } from '@/lib/rate-limit/sliding-window';
+
+type SummarizeRequest = {
+  text?: string;
+  maxSentences?: number;
+};
+
+const AI_SUMMARY_RATE_LIMIT = {
+  maxRequests: 20,
+  windowMs: 60_000,
+};
+
+function resolveRequestKey(request: NextRequest): string {
+  const ipHeader = request.headers.get('x-forwarded-for') || request.headers.get('cf-connecting-ip');
+  const ip = ipHeader?.split(',')[0]?.trim() || 'unknown-ip';
+  const userAgent = request.headers.get('user-agent') || 'unknown-ua';
+  return `${ip}:${userAgent.slice(0, 40)}`;
+}
+
+async function summarizeWithOpenAI(text: string, maxSentences: number): Promise<string> {
+  const apiKey = process.env.OPENAI_API_KEY;
+  if (!apiKey) {
+    throw new Error('OPENAI_API_KEY is not configured.');
+  }
+
+  const response = await fetch('https://api.openai.com/v1/chat/completions', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      Authorization: `Bearer ${apiKey}`,
+    },
+    body: JSON.stringify({
+      model: 'gpt-4o-mini',
+      temperature: 0.2,
+      messages: [
+        {
+          role: 'system',
+          content: `You summarize enterprise documents in ${maxSentences} concise sentence(s).`,
+        },
+        {
+          role: 'user',
+          content: truncateForModel(text),
+        },
+      ],
+    }),
+  });
+
+  if (!response.ok) {
+    const body = await response.text();
+    throw new Error(`OpenAI request failed (${response.status}): ${body}`);
+  }
+
+  const payload = await response.json();
+  const content = payload?.choices?.[0]?.message?.content;
+  if (!content || typeof content !== 'string') {
+    throw new Error('OpenAI response did not include summary text.');
+  }
+
+  return content.trim();
+}
+
+export async function POST(request: NextRequest) {
+  const traceId = `ai-summarize_${Date.now()}`;
+  const requestKey = resolveRequestKey(request);
+
+  const rateLimit = applySlidingWindowLimit({
+    key: requestKey,
+    maxRequests: AI_SUMMARY_RATE_LIMIT.maxRequests,
+    windowMs: AI_SUMMARY_RATE_LIMIT.windowMs,
+  });
+
+  if (!rateLimit.allowed) {
+    logger.warn({
+      traceId,
+      scope: 'ai-summarize-route',
+      message: 'AI summarize request blocked by rate limiter.',
+      data: {
+        requestKey,
+        retryAfterSeconds: rateLimit.retryAfterSeconds,
+      },
+    });
+
+    return NextResponse.json(
+      {
+        error: 'Rate limit exceeded for summarization requests. Please retry shortly.',
+        retryAfterSeconds: rateLimit.retryAfterSeconds,
+      },
+      {
+        status: 429,
+        headers: {
+          'Retry-After': String(rateLimit.retryAfterSeconds),
+        },
+      }
+    );
+  }
+
+  try {
+    const body = (await request.json()) as SummarizeRequest;
+    const text = body?.text?.trim() ?? '';
+    const maxSentences = Math.max(1, Math.min(body?.maxSentences ?? 2, 5));
+
+    if (!text) {
+      return NextResponse.json(
+        { error: 'text is required' },
+        { status: 400 }
+      );
+    }
+
+    let summary = '';
+    let provider: 'openai' | 'heuristic' = 'heuristic';
+
+    if (process.env.OPENAI_API_KEY) {
+      try {
+        summary = await summarizeWithOpenAI(text, maxSentences);
+        provider = 'openai';
+      } catch (error: unknown) {
+        logger.warn({
+          traceId,
+          scope: "ai-summarize-route",
+          message: "OpenAI summarization failed, falling back to heuristic summarizer.",
+          data: {
+            reason: error instanceof Error ? error.message : error,
+          },
+        });
+        summary = summarizeTextHeuristic(text, maxSentences);
+      }
+    } else {
+      summary = summarizeTextHeuristic(text, maxSentences);
+    }
+
+    logger.info({
+      traceId,
+      scope: "ai-summarize-route",
+      message: "Summary generated successfully.",
+      data: {
+        provider,
+        maxSentences,
+        inputLength: text.length,
+        outputLength: summary.length,
+      },
+    });
+
+    const usage = estimateAiUsage({
+      provider,
+      inputText: text,
+      outputText: summary,
+    });
+
+    return NextResponse.json({
+      summary,
+      provider,
+      maxSentences,
+      usage,
+      rateLimit: {
+        remaining: rateLimit.remaining,
+      },
+    });
+  } catch (error: unknown) {
+    logger.error({
+      traceId,
+      scope: "ai-summarize-route",
+      message: "Failed to generate summary.",
+      data: {
+        error: error instanceof Error ? error.message : error,
+      },
+    });
+
+    return NextResponse.json(
+      { error: 'Unable to generate summary' },
+      { status: 500 }
+    );
+  }
+}

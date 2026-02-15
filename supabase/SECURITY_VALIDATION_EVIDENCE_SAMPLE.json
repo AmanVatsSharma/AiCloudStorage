@@ -1,0 +1,67 @@
+{
+  "metadata": {
+    "environment": "staging",
+    "dateTimeUtc": "2026-02-15T11:30:00.000Z",
+    "validator": "platform.engineer@company.com",
+    "approver": "security.lead@company.com",
+    "changeTicket": "REL-4821",
+    "migrationSet": [
+      "20260215_security_baseline.sql",
+      "20260215_audit_events.sql",
+      "20260215_organization_foundation.sql",
+      "20260215_organization_member_management.sql",
+      "20260215_organization_invitation_acceptance.sql"
+    ]
+  },
+  "sqlVerification": {
+    "script": "supabase/scripts/security_baseline_validation.sql",
+    "summary": {
+      "rlsState": { "pass": 11, "fail": 0, "notes": "All required tables have RLS enabled." },
+      "helperFunctions": { "pass": 6, "fail": 0, "notes": "All authorization helper functions found." },
+      "forbiddenPolicies": { "pass": 9, "fail": 0, "notes": "No prototype temporary policies detected." },
+      "storagePrefixPolicies": { "pass": 4, "fail": 0, "notes": "All storage prefix policies present." }
+    }
+  },
+  "functionalSmoke": [
+    {
+      "scenario": "User A reads own files only",
+      "expected": "Allowed",
+      "actual": "Allowed",
+      "status": "PASS",
+      "evidenceRef": "staging-smoke-logs#user-a-files"
+    },
+    {
+      "scenario": "User B cannot read User A files",
+      "expected": "Denied",
+      "actual": "Denied with RLS policy error",
+      "status": "PASS",
+      "evidenceRef": "staging-smoke-logs#cross-user-deny"
+    },
+    {
+      "scenario": "Audit event writes",
+      "expected": "Logged",
+      "actual": "Logged",
+      "status": "PASS",
+      "evidenceRef": "staging-smoke-logs#audit-events"
+    }
+  ],
+  "regressionMetrics": {
+    "authErrorRate": { "baseline": "0.2%", "current": "0.2%", "delta": "0.0%", "status": "stable" },
+    "storageErrorRate": { "baseline": "0.1%", "current": "0.1%", "delta": "0.0%", "status": "stable" },
+    "dbPermissionErrors": { "baseline": "0.0%", "current": "0.0%", "delta": "0.0%", "status": "stable" }
+  },
+  "decision": {
+    "goNoGo": "GO",
+    "decisionOwner": "security.lead@company.com",
+    "timestampUtc": "2026-02-15T12:15:00.000Z",
+    "rationale": "All SQL and functional checks passed with no regression deltas."
+  },
+  "followUpActions": [
+    {
+      "action": "Run identical evidence capture in production maintenance window.",
+      "owner": "platform.engineer@company.com",
+      "dueDate": "2026-02-16",
+      "priority": "high"
+    }
+  ]
+}

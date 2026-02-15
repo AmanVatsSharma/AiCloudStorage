@@ -10,6 +10,7 @@ import { Button } from '@/components/ui/button'
 import Link from 'next/link'
 import { createServerClient } from '@/lib/supabase/server'
 import { redirect } from 'next/navigation'
+import { logger } from '@/lib/logger'
 
 export const metadata: Metadata = {
   title: "Dashboard - AI Cloud Storage",
@@ -17,22 +18,41 @@ export const metadata: Metadata = {
 }
 
 export default async function DashboardPage() {
+  const traceId = `dashboard_${Date.now()}`;
   const supabase = await createServerClient();
   const { data: { session } } = await supabase.auth.getSession();
 
   if (!session) {
-    redirect('/auth/login');
+    logger.warn({
+      traceId,
+      scope: "dashboard-page",
+      message: "No active session. Redirecting to login.",
+    });
+    redirect('/login');
   }
 
   // Make sure we have a valid user ID
   const userId = session.user?.id;
   if (!userId) {
-    console.error("User ID not available in session");
-    redirect('/auth/login');
+    logger.error({
+      traceId,
+      scope: "dashboard-page",
+      message: "Session exists but user ID is missing.",
+      data: {
+        hasSession: Boolean(session),
+      },
+    });
+    redirect('/login');
   }
 
-  // Log the userId to confirm it's a valid UUID
-  console.log(`Dashboard loading with user ID: ${userId}`);
+  logger.info({
+    traceId,
+    scope: "dashboard-page",
+    message: "Rendering dashboard for authenticated user.",
+    data: {
+      userId,
+    },
+  });
 
   return (
     <DashboardShell>

@@ -5,10 +5,10 @@ import { StorageUsage } from '../components/user/StorageUsage'
 
 export default async function ProfilePage() {
   const supabase = await createServerClient()
-  const { data: { session }, error } = await supabase.auth.getSession()
+  const { data: { session } } = await supabase.auth.getSession()
 
   if (!session) {
-    redirect('/auth/login')
+    redirect('/login')
   }
 
   return (

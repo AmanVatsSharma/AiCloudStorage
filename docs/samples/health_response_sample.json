@@ -1,0 +1,16 @@
+{
+  "status": "ok",
+  "timestamp": "2026-02-15T12:00:00.000Z",
+  "checks": [
+    {
+      "name": "supabase_public_config",
+      "status": "pass",
+      "message": "Supabase public URL and anon key are configured."
+    },
+    {
+      "name": "openai_key_configured",
+      "status": "pass",
+      "message": "OPENAI_API_KEY is configured."
+    }
+  ]
+}

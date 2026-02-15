@@ -1,5 +1,63 @@
 # Development Roadmap and Checklist
 
+## Current Hardening Status (2026-02)
+- [x] Canonicalized Supabase type usage across app modules
+- [x] Added structured logging and shared error-normalization utilities
+- [x] Standardized auth redirects and added auth callback + forgot-password routes
+- [x] Removed broken dashboard navigation by adding placeholder route pages
+- [x] Added initial module docs + flowcharts for files and teams modules
+- [x] Added enterprise security baseline migration (RLS + storage prefix isolation)
+- [x] Added AI summarization API foundation with OpenAI + heuristic fallback
+- [x] Added organization IAM schema foundation and organizations management UI baseline
+- [x] Added organization member-management workflow with role updates and invitation revocation
+- [x] Added secure organization invitation acceptance flow with token-based onboarding
+- [x] Added storage governance policy settings baseline
+- [x] Added AI tools UI baseline (summary workbench)
+- [x] Added AI summarize usage/cost telemetry baseline
+- [x] Added AI summarize endpoint rate-limit baseline with retry telemetry
+- [x] Replaced help placeholder with operational help center and command presets
+- [x] Replaced shared/favorites/recent placeholders with live account-scoped views
+- [x] Added reliability dashboard with SLO indicator tracking and export
+- [x] Added incident response and disaster recovery runbooks
+- [x] Added reliability alert threshold baseline from audit event signals
+- [x] Added security baseline validation runbook and SQL verification script
+- [x] Added authenticated reliability alerts API and SIEM integration guide
+- [x] Added reliability alerts API reference documentation
+- [x] Added health/readiness API endpoint and probe documentation
+- [x] Added storage analytics API endpoint and response contract documentation
+- [x] Added centralized documentation index for architecture, APIs, and operations runbooks
+- [x] Added security validation evidence capture template for staging/production rollout
+- [x] Added API quickstart examples for reliability and health integrations
+- [x] Added machine-readable security validation evidence JSON template and sample
+- [x] Added security validation evidence skeleton generator script
+- [x] Added npm shortcut for generating security validation evidence skeletons
+- [x] Added release validation ticket template for operational evidence capture
+- [x] Added reliability alerts API sample response artifact for integration testing
+- [x] Added health API sample response artifact for integration testing
+- [x] Added consolidated operations evidence pack checklist
+- [x] Added evidence artifact naming convention guides for samples and security evidence bundles
+- [x] Added operational API probe automation script and usage docs
+- [x] Added operational probe output sample artifact for integration workflows
+- [x] Added release validation ticket sample artifact
+- [x] Added operations artifacts matrix for release lifecycle evidence mapping
+- [x] Added JSON artifact validation automation for sample/evidence contracts
+- [x] Added CI enforcement for JSON artifact validation automation
+- [x] Added JSON sample schema requirements documentation aligned with validation script
+- [x] Added operations documentation changelog for sprint-by-sprint artifact tracking
+- [x] Added staging/production probe command presets for ops automation
+- [x] Added release validation ticket generator automation script
+- [x] Replaced analytics placeholder with live storage analytics dashboard
+- [x] Added storage analytics sample artifact and JSON contract validation coverage
+- [x] Added advanced file search filters and metadata search support
+- [x] Added canonical database schema reference documentation with relationship map
+- [x] Added automated security baseline validation runner with JSON report output
+- [x] Added file overwrite version archival with restore/download lifecycle support
+- [x] Validate security baseline migration in staging and production
+- [x] Added storage bucket management API and settings UI with governance controls
+- [x] Added Dockerfile-based deployment baseline and deployment runbook
+- [x] Added user-facing documentation set (user guide, feature reference, FAQ)
+- [x] Added developer-facing integration and SDK guidance documentation
+
 ## Phase 1: Project Setup and Core Infrastructure
 - [x] Initialize project structure
 - [x] Set up Next.js frontend
@@ -10,13 +68,13 @@
   - [x] Configure storage buckets
 - [ ] Configure development environment
   - [x] ESLint and project settings
-  - [ ] Jest testing setup
-  - [ ] CI/CD pipeline
-- [ ] NestJS Backend Setup
-  - [ ] Initialize NestJS project
-  - [ ] Create basic API structure
-  - [ ] Configure Supabase client in NestJS
-  - [ ] Implement authentication middleware
+  - [x] Jest testing setup
+  - [x] CI/CD pipeline
+- [ ] Backend API Service Setup (Next.js + Supabase)
+  - [x] Establish Next.js route handlers for core platform APIs
+  - [x] Configure Supabase server/client utilities for API access
+  - [x] Implement authenticated API handler patterns
+  - [ ] Add background job runner strategy for async workloads
 
 ## Phase 2: Authentication and User Management
 - [x] Implement authentication flow
@@ -27,29 +85,29 @@
   - [x] User profile CRUD
   - [x] Avatar management
   - [x] Email verification
-- [ ] Role-based access control
-  - [ ] Role definitions
-  - [ ] Permission system
-  - [ ] Access control implementation
+- [x] Role-based access control
+  - [x] Role definitions
+  - [x] Permission system
+  - [x] Access control implementation
 
 ## Phase 3: Core Storage Features
 - [x] File management (Supabase)
   - [x] File upload/download
   - [x] Folder creation/management
   - [x] File sharing
-  - [ ] Version control
-  - [ ] Trash management
-- [ ] Storage management
+  - [x] Version control
+  - [x] Trash management
+- [x] Storage management
   - [x] Storage quota display
-  - [ ] Usage statistics
-  - [ ] Bucket management UI
+  - [x] Usage statistics
+  - [x] Bucket management UI
 - [ ] Search functionality
-  - [ ] Basic search
-  - [ ] Advanced filters
-  - [ ] Metadata search
+  - [x] Basic search
+  - [x] Advanced filters
+  - [x] Metadata search
 
-## Phase 4: AI Integration with NestJS
-- [ ] Setup NestJS AI processing services
+## Phase 4: AI Integration with Next.js API Services
+- [ ] Setup AI processing services
   - [ ] Document processing pipeline
   - [ ] Integration with OpenAI APIs
   - [ ] File content extraction service
@@ -68,7 +126,7 @@
   - [ ] Auto-tagging
 
 ## Phase 5: Developer Platform
-- [ ] API development in NestJS
+- [ ] API development
   - [ ] REST API endpoints
   - [ ] GraphQL schema
   - [ ] API documentation
@@ -85,18 +143,18 @@
 - [x] Team management
   - [x] Team CRUD
   - [x] Member management
-  - [ ] Team permissions
-- [ ] Audit system
-  - [ ] Activity logging
-  - [ ] Audit reports
-  - [ ] Compliance tools
+  - [x] Team permissions
+- [x] Audit system
+  - [x] Activity logging
+  - [x] Audit reports
+  - [x] Compliance tools
 - [ ] Advanced security
   - [x] 2FA setup interface
   - [ ] E2E encryption
   - [ ] IP whitelisting
   - [ ] Security policies
 
-## Phase 7: AI Workflow Automation with NestJS
+## Phase 7: AI Workflow Automation
 - [ ] Workflow engine
   - [ ] Workflow definition
   - [ ] Action triggers
@@ -121,13 +179,14 @@
   - [ ] Performance monitoring
   - [ ] Load testing
 - [ ] Infrastructure
-  - [ ] Docker setup
+  - [x] Docker setup
   - [ ] Deployment infrastructure
   - [ ] Auto-scaling
 - [ ] Monitoring
-  - [ ] Logging system
-  - [ ] Alert system
-  - [ ] Analytics dashboard
+  - [x] Logging system
+  - [x] Alert system
+  - [x] Analytics dashboard
+  - [x] External monitoring integration API baseline
 
 ## Testing Checklist
 - [ ] Unit tests
@@ -146,13 +205,13 @@
 ## Documentation Checklist
 - [x] Architecture documentation
   - [x] Architecture overview
-  - [ ] API documentation
-  - [ ] Database schema
-- [ ] User documentation
-  - [ ] User guides
-  - [ ] Feature documentation
-  - [ ] FAQ
-- [ ] Developer documentation
-  - [ ] SDK guides
-  - [ ] Integration guides
-  - [ ] Best practices 
+  - [x] API documentation
+  - [x] Database schema
+- [x] User documentation
+  - [x] User guides
+  - [x] Feature documentation
+  - [x] FAQ
+- [x] Developer documentation
+  - [x] SDK guides
+  - [x] Integration guides
+  - [x] Best practices

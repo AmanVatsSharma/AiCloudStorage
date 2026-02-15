@@ -1,113 +1,99 @@
 # Cloud Storage Platform Architecture
 
-## Current Architecture
+## Current Architecture (Implemented)
 
-The current implementation is built on:
+### Runtime stack
+- **Frontend**: Next.js (App Router) + React + TypeScript + Tailwind
+- **Platform services**: Supabase Auth + Postgres + Storage + RPC
+- **Middleware**: session refresh middleware for protected route access
+- **Testing**: Jest baseline for utility-layer unit tests
 
-- **Frontend**: Next.js with TypeScript, TailwindCSS, and React
-- **Backend Services**: Supabase (Authentication, Database, Storage)
-- **Deployment**: Vercel (implied)
+### Current design characteristics
+- Route-protected dashboard shell.
+- Rich client-side file operations with Supabase-backed persistence.
+- Team collaboration module based on RPC functions.
+- Structured application logs and non-blocking audit event tracking hooks.
+- Reliability insights available through UI and authenticated API export path:
+  - `/reliability`
+  - `/api/reliability/alerts`
+- Operational readiness probe endpoint:
+  - `/api/health`
 
-This architecture has successfully implemented:
-- User authentication and profile management
-- File storage and basic operations
-- UI components and responsive design
+---
 
-## Recommended Architecture: Hybrid Approach
+## Data and Security Baseline
 
-To fulfill the ambitious AI-powered features while leveraging existing work, we recommend a hybrid architecture:
+### Type and schema governance
+- Canonical DB type map is maintained in `lib/types/supabase.ts`.
+- Legacy duplicate type paths now re-export the canonical type source.
 
-### Core Components
+### Security hardening migrations
+- `supabase/migrations/20260215_security_baseline.sql`
+  - removes temporary broad policies,
+  - introduces least-privilege RLS for app tables,
+  - enforces storage prefix isolation for user-owned objects.
+- `supabase/migrations/20260215_audit_events.sql`
+  - introduces `audit_events` table + insert RPC,
+  - establishes initial audit visibility and write constraints.
+- `supabase/migrations/20260215_organization_foundation.sql`
+  - introduces organization, membership, and invitation tables,
+  - adds reusable org ownership/admin/member helper functions,
+  - establishes initial multi-tenant IAM policy baseline.
 
-1. **Frontend Layer**
-   - Next.js (current implementation)
-   - React components
-   - TailwindCSS for styling
-   - Client-side state management
+---
 
-2. **Supabase Services** (retain existing implementation)
-   - Authentication & user management
-   - Database for structured data
-   - Storage buckets for files
-   - Realtime subscriptions
+## Near-Term Target Architecture (Hybrid)
 
-3. **NestJS Backend** (new addition, phased implementation)
-   - AI processing microservices
-   - Complex business logic
-   - Advanced developer API features
-   - Performance-intensive operations
+### Why hybrid
+The product needs:
+1) rapid iteration with Supabase for core CRUD/auth/storage, and
+2) dedicated backend services for AI pipelines and enterprise policy orchestration.
 
-4. **AI Services Integration**
-   - OpenAI for text processing
-   - Cloud vision APIs for image analysis
-   - Custom ML models for specialized tasks
+### Target components
+1. **Next.js Web App**
+   - UX, orchestration, client-side interactions, route protection.
+2. **Supabase Core Plane**
+   - auth, relational data, storage, policy enforcement, audit persistence.
+3. **AI/Automation Service Layer (planned)**
+   - queue-driven processing, inference orchestration, policy-aware enrichment.
+4. **Enterprise Control Plane (planned)**
+   - org/RBAC management, compliance/reporting APIs, lifecycle governance.
 
-### Communication Flow
+---
 
+## Request/Control Flow
+
+```mermaid
+flowchart LR
+  U[User Browser] --> W[Next.js App]
+  W --> A[Supabase Auth]
+  W --> D[Supabase Postgres/RPC]
+  W --> S[Supabase Storage]
+  W --> L[Structured Logger]
+  W --> E[Audit RPC log_audit_event]
+
+  D --> P[RLS Policies]
+  S --> SP[Storage Prefix Policies]
+
+  W -. planned .-> X[AI Service Layer]
+  X -. planned .-> M[Model Providers / AI APIs]
 ```
-┌─────────────┐      ┌─────────────┐      ┌─────────────┐
-│             │      │             │      │             │
-│  Next.js    │<────>│  Supabase   │<────>│  Storage    │
-│  Frontend   │      │  Services   │      │  Buckets    │
-│             │      │             │      │             │
-└──────┬──────┘      └─────────────┘      └─────────────┘
-       │
-       │                 ┌─────────────┐
-       │                 │             │
-       └───────────────>│   NestJS    │
-                         │  Backend    │
-                         │             │
-                         └──────┬──────┘
-                                │
-                                │
-                         ┌──────┴──────┐
-                         │             │
-                         │     AI      │
-                         │  Services   │
-                         │             │
-                         └─────────────┘
-```
 
-## Implementation Strategy
+---
 
-### Phase 1: Continue Frontend Development
-- Complete remaining frontend checklist items using current architecture
-- Implement search functionality
-- Add drag-and-drop support
-- Develop user interface for future AI features
+## Architecture Priorities (Active)
+1. **Security-first defaults** (least privilege, tenant isolation).
+2. **Operational reliability** (tests, explicit error paths, deterministic behavior).
+3. **Auditability** (event capture and compliance-friendly data model).
+4. **Incremental AI expansion** without destabilizing core storage workflows.
 
-### Phase 2: Introduce NestJS Backend (Minimal Viable Implementation)
-- Set up NestJS project with TypeScript
-- Implement basic API endpoints that communicate with Supabase
-- Create authentication middleware that validates Supabase tokens
-- Develop a simple AI feature (e.g., document text extraction) as proof of concept
+---
 
-### Phase 3: Implement AI Features via NestJS
-- Document processing services
-- Image analysis pipeline
-- Media transcription services
-- Smart categorization algorithms
-
-### Phase 4: Developer Platform & Advanced Features
-- API management through NestJS
-- Custom workflow engine
-- Advanced security features
-- Enterprise integration capabilities
-
-## Benefits of This Approach
-
-1. **Preserve Current Progress**: Continue using the existing Supabase implementation for auth and storage
-2. **Gradual Migration**: Add NestJS capabilities without rewriting existing functionality
-3. **Specialized Processing**: Leverage NestJS for computationally intensive AI tasks
-4. **Scalability**: Better handle high-load scenarios with dedicated processing
-5. **Flexibility**: More control over complex business logic and custom features
-
-## Technical Considerations
-
-1. **Authentication Flow**: NestJS will validate tokens issued by Supabase
-2. **Data Access Patterns**: Some operations may require both Supabase and NestJS
-3. **Deployment Strategy**: May require multiple services/containers
-4. **Development Workflow**: Frontend and backend can be developed in parallel
-5. **API Design**: Clear separation between Supabase and NestJS responsibilities
-
-This hybrid approach provides the best balance between leveraging your existing implementation and enabling the advanced AI capabilities that will differentiate your platform. 
+## Operational Runbook References
+- `docs/operations/INCIDENT_RESPONSE_RUNBOOK.md`
+- `docs/operations/DISASTER_RECOVERY_RUNBOOK.md`
+- `docs/operations/README.md`
+- `docs/API_RELIABILITY_ALERTS.md`
+- `docs/API_HEALTH.md`
+- `docs/API_STORAGE_ANALYTICS.md`
+- `docs/DATABASE_SCHEMA.md`

@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useCallback, useMemo, useState, useEffect } from 'react';
 import { createClient } from '@/lib/supabase/client';
 import { FiClock, FiDownload, FiRotateCcw, FiTrash2 } from 'react-icons/fi';
 import { Button } from '@/components/ui/button';
@@ -13,6 +13,9 @@ import {
   DialogTitle,
   DialogFooter,
 } from '@/components/ui/dialog';
+import { getUserErrorMessage } from '@/lib/errors';
+import { logger } from '@/lib/logger';
+import { buildVersionObjectPath } from '@/lib/files/versioning';
 
 interface Version {
   id: string;
@@ -35,16 +38,11 @@ interface FileVersionHistoryProps {
 export function FileVersionHistory({ file, isOpen, onClose }: FileVersionHistoryProps) {
   const [versions, setVersions] = useState<Version[]>([]);
   const [isLoading, setIsLoading] = useState(true);
-  const supabase = createClient();
+  const supabase = useMemo(() => createClient(), []);
   const { toast } = useToast();
+  const [traceId] = useState(() => `file-version-history_${Date.now()}`);
 
-  useEffect(() => {
-    if (isOpen) {
-      fetchVersions();
-    }
-  }, [isOpen, file.id]);
-
-  const fetchVersions = async () => {
+  const fetchVersions = useCallback(async () => {
     setIsLoading(true);
     try {
       const { data, error } = await supabase
@@ -55,20 +53,35 @@ export function FileVersionHistory({ file, isOpen, onClose }: FileVersionHistory
 
       if (error) throw error;
       setVersions(data || []);
-    } catch (error: any) {
+    } catch (error: unknown) {
+      logger.error({
+        traceId,
+        scope: "file-version-history",
+        message: "Failed to fetch versions.",
+        data: {
+          fileId: file.id,
+          error: error instanceof Error ? error.message : error,
+        },
+      });
       toast({
         title: 'Error',
-        description: error.message || 'Failed to fetch file versions',
+        description: getUserErrorMessage(error, 'Failed to fetch file versions'),
         variant: 'destructive',
       });
     } finally {
       setIsLoading(false);
     }
-  };
+  }, [file.id, supabase, toast, traceId]);
+
+  useEffect(() => {
+    if (isOpen) {
+      void fetchVersions();
+    }
+  }, [fetchVersions, isOpen]);
 
   const handleDownloadVersion = async (version: Version) => {
     try {
-      const versionPath = `versions/${file.id}/${version.version}/${file.name}`;
+      const versionPath = buildVersionObjectPath(file.id, version.version, file.name);
       
       const { data, error } = await supabase.storage
         .from('files')
@@ -84,10 +97,20 @@ export function FileVersionHistory({ file, isOpen, onClose }: FileVersionHistory
         link.click();
         document.body.removeChild(link);
       }
-    } catch (error: any) {
+    } catch (error: unknown) {
+      logger.error({
+        traceId,
+        scope: "file-version-history",
+        message: "Failed to download version.",
+        data: {
+          fileId: file.id,
+          version: version.version,
+          error: error instanceof Error ? error.message : error,
+        },
+      });
       toast({
         title: 'Error',
-        description: error.message || 'Failed to download version',
+        description: getUserErrorMessage(error, 'Failed to download version'),
         variant: 'destructive',
       });
     }
@@ -96,7 +119,7 @@ export function FileVersionHistory({ file, isOpen, onClose }: FileVersionHistory
   const handleRestoreVersion = async (version: Version) => {
     try {
       // Copy the version file to the main file path
-      const sourcePath = `versions/${file.id}/${version.version}/${file.name}`;
+      const sourcePath = buildVersionObjectPath(file.id, version.version, file.name);
       
       // First download the version file
       const { data: fileData, error: downloadError } = await supabase.storage
@@ -129,10 +152,20 @@ export function FileVersionHistory({ file, isOpen, onClose }: FileVersionHistory
       });
       
       onClose();
-    } catch (error: any) {
+    } catch (error: unknown) {
+      logger.error({
+        traceId,
+        scope: "file-version-history",
+        message: "Failed to restore version.",
+        data: {
+          fileId: file.id,
+          version: version.version,
+          error: error instanceof Error ? error.message : error,
+        },
+      });
       toast({
         title: 'Error',
-        description: error.message || 'Failed to restore version',
+        description: getUserErrorMessage(error, 'Failed to restore version'),
         variant: 'destructive',
       });
     }
@@ -144,7 +177,7 @@ export function FileVersionHistory({ file, isOpen, onClose }: FileVersionHistory
     }
     
     try {
-      const versionPath = `versions/${file.id}/${version.version}/${file.name}`;
+      const versionPath = buildVersionObjectPath(file.id, version.version, file.name);
       
       // Delete from storage
       const { error: storageError } = await supabase.storage
@@ -167,10 +200,20 @@ export function FileVersionHistory({ file, isOpen, onClose }: FileVersionHistory
         title: 'Success',
         description: `Version ${version.version} deleted successfully`,
       });
-    } catch (error: any) {
+    } catch (error: unknown) {
+      logger.error({
+        traceId,
+        scope: "file-version-history",
+        message: "Failed to delete version.",
+        data: {
+          fileId: file.id,
+          version: version.version,
+          error: error instanceof Error ? error.message : error,
+        },
+      });
       toast({
         title: 'Error',
-        description: error.message || 'Failed to delete version',
+        description: getUserErrorMessage(error, 'Failed to delete version'),
         variant: 'destructive',
       });
     }

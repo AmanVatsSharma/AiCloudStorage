@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { createClient } from '@/lib/supabase/client';
 import { 
   Card, 
@@ -33,7 +33,7 @@ interface RecentFilesCardProps {
 export function RecentFilesCard({ userId, className = '' }: RecentFilesCardProps) {
   const [files, setFiles] = useState<FileItem[]>([]);
   const [loading, setLoading] = useState(true);
-  const supabase = createClient();
+  const supabase = useMemo(() => createClient(), []);
 
   useEffect(() => {
     async function fetchRecentFiles() {
@@ -49,6 +49,7 @@ export function RecentFilesCard({ userId, className = '' }: RecentFilesCardProps
           .from('files')
           .select('*')
           .eq('user_id', userId)
+          .eq('is_trashed', false)
           .order('updated_at', { ascending: false })
           .limit(5);
 
