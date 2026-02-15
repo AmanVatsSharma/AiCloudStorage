@@ -12,6 +12,8 @@ Operationalize security migration validation for staging and production before/a
   - `migrations/20260215_organization_invitation_acceptance.sql`
 - Validation script:
   - `scripts/security_baseline_validation.sql`
+- Evidence template:
+  - `SECURITY_VALIDATION_EVIDENCE_TEMPLATE.md`
 
 ## Environments
 - **Staging** (mandatory before production)
@@ -55,6 +57,8 @@ Attach to release ticket:
 - SQL validation output screenshots/logs.
 - Smoke test evidence.
 - Final go/no-go decision and approver.
+- Completed template:
+  - `SECURITY_VALIDATION_EVIDENCE_TEMPLATE.md`
 
 ## Validation Flowchart
 ```mermaid

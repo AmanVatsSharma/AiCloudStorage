@@ -92,3 +92,4 @@ flowchart TD
 ## Validation Assets
 - Runbook: `SECURITY_VALIDATION_RUNBOOK.md`
 - SQL checks: `scripts/security_baseline_validation.sql`
+- Evidence template: `SECURITY_VALIDATION_EVIDENCE_TEMPLATE.md`
