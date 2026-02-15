@@ -20,6 +20,7 @@
 - [x] Added reliability alert threshold baseline from audit event signals
 - [x] Added security baseline validation runbook and SQL verification script
 - [x] Added authenticated reliability alerts API and SIEM integration guide
+- [x] Added reliability alerts API reference documentation
 - [ ] Validate security baseline migration in staging and production
 
 ## Phase 1: Project Setup and Core Infrastructure
@@ -169,7 +170,7 @@
 ## Documentation Checklist
 - [x] Architecture documentation
   - [x] Architecture overview
-  - [ ] API documentation
+  - [x] API documentation
   - [ ] Database schema
 - [ ] User documentation
   - [ ] User guides

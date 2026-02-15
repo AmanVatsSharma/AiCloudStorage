@@ -5,6 +5,7 @@ Integrate reliability alerts and security telemetry into external monitoring sys
 
 ## Reliability Alerts API
 - Endpoint: `GET /api/reliability/alerts`
+- API reference: `docs/API_RELIABILITY_ALERTS.md`
 - Integration auth:
   - Header: `Authorization: Bearer <RELIABILITY_ALERTS_API_TOKEN>`
   - Server env required: `SUPABASE_SERVICE_ROLE_KEY`
