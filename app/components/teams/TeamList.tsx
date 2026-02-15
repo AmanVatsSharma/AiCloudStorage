@@ -1,12 +1,14 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { createClient } from '@/lib/supabase/client';
 import { useRouter } from 'next/navigation';
 import { useToast } from '@/components/ui/use-toast';
-import { FiUser, FiUsers, FiEdit, FiTrash, FiPlusCircle, FiEye, FiUserPlus } from 'react-icons/fi';
+import { FiUser, FiUsers, FiEdit, FiTrash, FiEye } from 'react-icons/fi';
 import { Button } from '@/components/ui/button';
 import { TeamDialog } from './TeamDialog';
+import { getUserErrorMessage } from '@/lib/errors';
+import { logger } from '@/lib/logger';
 
 interface Team {
   id: string;
@@ -26,9 +28,10 @@ interface TeamListProps {
 export function TeamList({ userId, filter }: TeamListProps) {
   const [teams, setTeams] = useState<Team[]>([]);
   const [loading, setLoading] = useState(true);
-  const supabase = createClient();
+  const supabase = useMemo(() => createClient(), []);
   const router = useRouter();
   const { toast } = useToast();
+  const [traceId] = useState(() => `team-list_${Date.now()}`);
 
   useEffect(() => {
     fetchTeams();
@@ -60,12 +63,29 @@ export function TeamList({ userId, filter }: TeamListProps) {
       });
       
       setTeams(filteredTeams);
-      console.log(`${filter} teams data:`, filteredTeams);
-    } catch (error) {
-      console.error('Error fetching teams:', error);
+      logger.debug({
+        traceId,
+        scope: "team-list",
+        message: "Fetched teams for filter.",
+        data: {
+          filter,
+          count: filteredTeams.length,
+        },
+      });
+    } catch (error: unknown) {
+      logger.error({
+        traceId,
+        scope: "team-list",
+        message: "Failed to fetch team list.",
+        data: {
+          userId,
+          filter,
+          error: error instanceof Error ? error.message : error,
+        },
+      });
       toast({
         title: 'Error',
-        description: 'Failed to load teams',
+        description: getUserErrorMessage(error, 'Failed to load teams'),
         variant: 'destructive',
       });
     } finally {
@@ -80,7 +100,7 @@ export function TeamList({ userId, filter }: TeamListProps) {
     
     try {
       // Use the new database function to delete a team
-      const { data, error } = await supabase
+      const { error } = await supabase
         .rpc('delete_team', {
           p_team_id: teamId,
           p_user_id: userId
@@ -95,11 +115,20 @@ export function TeamList({ userId, filter }: TeamListProps) {
       
       // Refresh the list
       fetchTeams();
-    } catch (error: any) {
-      console.error('Error deleting team:', error);
+    } catch (error: unknown) {
+      logger.error({
+        traceId,
+        scope: "team-list",
+        message: "Failed to delete team from list view.",
+        data: {
+          userId,
+          teamId,
+          error: error instanceof Error ? error.message : error,
+        },
+      });
       toast({
         title: 'Error',
-        description: error.message || 'Failed to delete team',
+        description: getUserErrorMessage(error, 'Failed to delete team'),
         variant: 'destructive',
       });
     }

@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import { createClient } from '@/lib/supabase/client';
 import { useRouter } from 'next/navigation';
 import { useToast } from '@/components/ui/use-toast';
@@ -18,6 +18,8 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
+import { getUserErrorMessage } from '@/lib/errors';
+import { logger } from '@/lib/logger';
 
 interface TeamData {
   id?: string;
@@ -40,9 +42,10 @@ export function TeamDialog({ userId, team, onSuccess, trigger }: TeamDialogProps
     description: team?.description || '',
   });
   const [loading, setLoading] = useState(false);
-  const supabase = createClient();
+  const supabase = useMemo(() => createClient(), []);
   const router = useRouter();
   const { toast } = useToast();
+  const [traceId] = useState(() => `team-dialog_${Date.now()}`);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target;
@@ -69,7 +72,7 @@ export function TeamDialog({ userId, team, onSuccess, trigger }: TeamDialogProps
     try {
       if (isEditing) {
         // Update existing team using the new database function
-        const { data, error } = await supabase
+        const { error } = await supabase
           .rpc('update_team', {
             p_team_id: team.id,
             p_user_id: userId,
@@ -85,7 +88,7 @@ export function TeamDialog({ userId, team, onSuccess, trigger }: TeamDialogProps
         });
       } else {
         // Create new team using the new database function
-        const { data, error } = await supabase
+        const { error } = await supabase
           .rpc('create_team_with_owner', {
             p_name: formData.name,
             p_description: formData.description || null,
@@ -110,11 +113,21 @@ export function TeamDialog({ userId, team, onSuccess, trigger }: TeamDialogProps
       } else {
         router.refresh();
       }
-    } catch (error: any) {
-      console.error('Error saving team:', error);
+    } catch (error: unknown) {
+      logger.error({
+        traceId,
+        scope: "team-dialog",
+        message: "Team create/update failed.",
+        data: {
+          userId,
+          teamId: team?.id,
+          isEditing,
+          error: error instanceof Error ? error.message : error,
+        },
+      });
       toast({
         title: 'Error',
-        description: error.message || 'Failed to save team',
+        description: getUserErrorMessage(error, 'Failed to save team'),
         variant: 'destructive',
       });
     } finally {

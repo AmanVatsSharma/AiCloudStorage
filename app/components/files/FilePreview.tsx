@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { FiX, FiDownload, FiInfo } from 'react-icons/fi';
 import { createClient } from '@/lib/supabase/client';
 import Image from 'next/image';
@@ -25,7 +25,7 @@ export function FilePreview({ file, onClose }: FilePreviewProps) {
   const [url, setUrl] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [imageLoaded, setImageLoaded] = useState(false);
-  const supabase = createClient();
+  const supabase = useMemo(() => createClient(), []);
 
   // Create a cached URL to avoid regenerating the signed URL every time
   useEffect(() => {
@@ -69,7 +69,7 @@ export function FilePreview({ file, onClose }: FilePreviewProps) {
     };
 
     getFileUrl();
-  }, [file.id, file.path, supabase.storage]);
+  }, [file.id, file.path, supabase]);
 
   const handleDownload = async () => {
     if (url) {

@@ -1,8 +1,8 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { createClient } from '@/lib/supabase/client';
-import { FiUser, FiUserX, FiUserCheck, FiMail } from 'react-icons/fi';
+import { FiUser, FiUserX, FiUserCheck } from 'react-icons/fi';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/components/ui/use-toast';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
@@ -14,6 +14,8 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table';
+import { getUserErrorMessage } from '@/lib/errors';
+import { logger } from '@/lib/logger';
 
 interface Member {
   id: string;
@@ -35,8 +37,9 @@ interface MemberListProps {
 export function MemberList({ teamId, isOwner, userId }: MemberListProps) {
   const [members, setMembers] = useState<Member[]>([]);
   const [loading, setLoading] = useState(true);
-  const supabase = createClient();
+  const supabase = useMemo(() => createClient(), []);
   const { toast } = useToast();
+  const [traceId] = useState(() => `member-list_${Date.now()}`);
 
   useEffect(() => {
     fetchMembers();
@@ -53,7 +56,16 @@ export function MemberList({ teamId, isOwner, userId }: MemberListProps) {
         });
 
       if (error) {
-        console.error('Error fetching team members:', error);
+        logger.error({
+          traceId,
+          scope: "member-list",
+          message: "Failed to fetch team members.",
+          data: {
+            teamId,
+            userId,
+            error: error.message,
+          },
+        });
         toast({
           title: 'Error',
           description: 'Failed to load team members',
@@ -63,11 +75,20 @@ export function MemberList({ teamId, isOwner, userId }: MemberListProps) {
       }
 
       setMembers(data || []);
-    } catch (error) {
-      console.error('Error fetching team members:', error);
+    } catch (error: unknown) {
+      logger.error({
+        traceId,
+        scope: "member-list",
+        message: "Unexpected error while fetching team members.",
+        data: {
+          teamId,
+          userId,
+          error: error instanceof Error ? error.message : error,
+        },
+      });
       toast({
         title: 'Error',
-        description: 'Failed to load team members',
+        description: getUserErrorMessage(error, 'Failed to load team members'),
         variant: 'destructive',
       });
     } finally {
@@ -84,7 +105,7 @@ export function MemberList({ teamId, isOwner, userId }: MemberListProps) {
 
     try {
       // Use the database function to remove a team member
-      const { data, error } = await supabase
+      const { error } = await supabase
         .rpc('remove_team_member', {
           p_team_id: teamId,
           p_user_id: userId,
@@ -100,11 +121,21 @@ export function MemberList({ teamId, isOwner, userId }: MemberListProps) {
 
       // Refresh the member list
       fetchMembers();
-    } catch (error) {
-      console.error('Error removing member:', error);
+    } catch (error: unknown) {
+      logger.error({
+        traceId,
+        scope: "member-list",
+        message: "Failed to remove team member.",
+        data: {
+          teamId,
+          memberId,
+          userId,
+          error: error instanceof Error ? error.message : error,
+        },
+      });
       toast({
         title: 'Error',
-        description: 'Failed to remove member',
+        description: getUserErrorMessage(error, 'Failed to remove member'),
         variant: 'destructive',
       });
     }
@@ -130,11 +161,22 @@ export function MemberList({ teamId, isOwner, userId }: MemberListProps) {
 
       // Refresh the member list
       fetchMembers();
-    } catch (error) {
-      console.error('Error updating member role:', error);
+    } catch (error: unknown) {
+      logger.error({
+        traceId,
+        scope: "member-list",
+        message: "Failed to update member role.",
+        data: {
+          teamId,
+          memberId,
+          newRole,
+          userId,
+          error: error instanceof Error ? error.message : error,
+        },
+      });
       toast({
         title: 'Error',
-        description: 'Failed to update member role',
+        description: getUserErrorMessage(error, 'Failed to update member role'),
         variant: 'destructive',
       });
     }

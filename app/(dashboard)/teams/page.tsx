@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { createClient } from '@/lib/supabase/client';
 import { useRouter } from 'next/navigation';
 import { DashboardShell } from '@/components/layout/DashboardShell';
@@ -11,13 +11,15 @@ import { FiPlus } from 'react-icons/fi';
 // import { useToast } from '@/components/ui/use-toast';
 import { TeamList } from '@/app/components/teams/TeamList';
 import { TeamDialog } from '@/app/components/teams/TeamDialog';
+import { logger } from '@/lib/logger';
 
 export default function TeamsPage() {
   const [userId, setUserId] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState('my-teams');
-  const supabase = createClient();
+  const supabase = useMemo(() => createClient(), []);
   const router = useRouter();
+  const [traceId] = useState(() => `teams-page_${Date.now()}`);
 //   const { toast } = useToast();
 
   useEffect(() => {
@@ -27,22 +29,36 @@ export default function TeamsPage() {
         const { data: { user }, error } = await supabase.auth.getUser();
         
         if (error || !user) {
-          console.error('Error getting user:', error);
+          logger.warn({
+            traceId,
+            scope: "teams-page",
+            message: "No authenticated user for teams page.",
+            data: {
+              error: error?.message,
+            },
+          });
           router.push('/login');
           return;
         }
         
         setUserId(user.id);
-      } catch (error) {
-        console.error('Error in auth check:', error);
+      } catch (error: unknown) {
+        logger.error({
+          traceId,
+          scope: "teams-page",
+          message: "Error during teams page auth check.",
+          data: {
+            error: error instanceof Error ? error.message : error,
+          },
+        });
         router.push('/login');
       } finally {
         setLoading(false);
       }
     }
     
-    checkUser();
-  }, [supabase, router]);
+    void checkUser();
+  }, [supabase, router, traceId]);
 
   if (loading) {
     return (

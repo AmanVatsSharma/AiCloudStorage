@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useMemo, useState, useEffect } from 'react';
 import { createClient } from '@/lib/supabase/client';
 import { FiClock, FiDownload, FiRotateCcw, FiTrash2 } from 'react-icons/fi';
 import { Button } from '@/components/ui/button';
@@ -13,6 +13,8 @@ import {
   DialogTitle,
   DialogFooter,
 } from '@/components/ui/dialog';
+import { getUserErrorMessage } from '@/lib/errors';
+import { logger } from '@/lib/logger';
 
 interface Version {
   id: string;
@@ -35,8 +37,9 @@ interface FileVersionHistoryProps {
 export function FileVersionHistory({ file, isOpen, onClose }: FileVersionHistoryProps) {
   const [versions, setVersions] = useState<Version[]>([]);
   const [isLoading, setIsLoading] = useState(true);
-  const supabase = createClient();
+  const supabase = useMemo(() => createClient(), []);
   const { toast } = useToast();
+  const [traceId] = useState(() => `file-version-history_${Date.now()}`);
 
   useEffect(() => {
     if (isOpen) {
@@ -55,10 +58,19 @@ export function FileVersionHistory({ file, isOpen, onClose }: FileVersionHistory
 
       if (error) throw error;
       setVersions(data || []);
-    } catch (error: any) {
+    } catch (error: unknown) {
+      logger.error({
+        traceId,
+        scope: "file-version-history",
+        message: "Failed to fetch versions.",
+        data: {
+          fileId: file.id,
+          error: error instanceof Error ? error.message : error,
+        },
+      });
       toast({
         title: 'Error',
-        description: error.message || 'Failed to fetch file versions',
+        description: getUserErrorMessage(error, 'Failed to fetch file versions'),
         variant: 'destructive',
       });
     } finally {
@@ -84,10 +96,20 @@ export function FileVersionHistory({ file, isOpen, onClose }: FileVersionHistory
         link.click();
         document.body.removeChild(link);
       }
-    } catch (error: any) {
+    } catch (error: unknown) {
+      logger.error({
+        traceId,
+        scope: "file-version-history",
+        message: "Failed to download version.",
+        data: {
+          fileId: file.id,
+          version: version.version,
+          error: error instanceof Error ? error.message : error,
+        },
+      });
       toast({
         title: 'Error',
-        description: error.message || 'Failed to download version',
+        description: getUserErrorMessage(error, 'Failed to download version'),
         variant: 'destructive',
       });
     }
@@ -129,10 +151,20 @@ export function FileVersionHistory({ file, isOpen, onClose }: FileVersionHistory
       });
       
       onClose();
-    } catch (error: any) {
+    } catch (error: unknown) {
+      logger.error({
+        traceId,
+        scope: "file-version-history",
+        message: "Failed to restore version.",
+        data: {
+          fileId: file.id,
+          version: version.version,
+          error: error instanceof Error ? error.message : error,
+        },
+      });
       toast({
         title: 'Error',
-        description: error.message || 'Failed to restore version',
+        description: getUserErrorMessage(error, 'Failed to restore version'),
         variant: 'destructive',
       });
     }
@@ -167,10 +199,20 @@ export function FileVersionHistory({ file, isOpen, onClose }: FileVersionHistory
         title: 'Success',
         description: `Version ${version.version} deleted successfully`,
       });
-    } catch (error: any) {
+    } catch (error: unknown) {
+      logger.error({
+        traceId,
+        scope: "file-version-history",
+        message: "Failed to delete version.",
+        data: {
+          fileId: file.id,
+          version: version.version,
+          error: error instanceof Error ? error.message : error,
+        },
+      });
       toast({
         title: 'Error',
-        description: error.message || 'Failed to delete version',
+        description: getUserErrorMessage(error, 'Failed to delete version'),
         variant: 'destructive',
       });
     }

@@ -55,7 +55,7 @@ export function useAuth() {
     try {
       const { error } = await supabase.auth.signOut()
       if (error) throw error
-      router.push('/auth/login')
+      router.push('/login')
     } catch (error) {
       console.error('Error signing out:', error)
     }

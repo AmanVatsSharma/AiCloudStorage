@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { createClient } from '@/lib/supabase/client';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { FiFolder, FiUsers, FiShare2, FiHardDrive } from 'react-icons/fi';
@@ -19,7 +19,7 @@ export function StatsCards({ userId }: StatsCardsProps) {
     teamMembers: 0
   });
   const [loading, setLoading] = useState(true);
-  const supabase = createClient();
+  const supabase = useMemo(() => createClient(), []);
 
   useEffect(() => {
     async function fetchStats() {

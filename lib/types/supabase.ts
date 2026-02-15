@@ -89,7 +89,7 @@ export interface Database {
           name: string;
           size: number;
           type: string;
-          path: string;
+          path: string | null;
           user_id: string;
           parent_id: string | null;
           is_folder: boolean;
@@ -104,7 +104,7 @@ export interface Database {
           name: string;
           size: number;
           type: string;
-          path: string;
+          path?: string | null;
           user_id: string;
           parent_id?: string | null;
           is_folder?: boolean;
@@ -119,7 +119,7 @@ export interface Database {
           name?: string;
           size?: number;
           type?: string;
-          path?: string;
+          path?: string | null;
           user_id?: string;
           parent_id?: string | null;
           is_folder?: boolean;

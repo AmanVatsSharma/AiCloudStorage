@@ -48,7 +48,7 @@ const BreadcrumbLink = React.forwardRef<
   React.AnchorHTMLAttributes<HTMLAnchorElement> & {
     asChild?: boolean
   }
->(({ asChild, className, ...props }, ref) => {
+>(({ className, ...props }, ref) => {
   return (
     <a
       ref={ref}

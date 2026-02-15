@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback, useMemo } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import { createClient } from '@/lib/supabase/client';
 import { DashboardShell } from '@/components/layout/DashboardShell';
@@ -11,6 +11,8 @@ import { FiArrowLeft, FiEdit, FiTrash, FiUserPlus } from 'react-icons/fi';
 import { MemberList } from '@/app/components/teams/MemberList';
 import { TeamDialog } from '@/app/components/teams/TeamDialog';
 import { InviteMemberDialog } from '@/app/components/teams/InviteMemberDialog';
+import { getUserErrorMessage } from '@/lib/errors';
+import { logger } from '@/lib/logger';
 
 interface Team {
   id: string;
@@ -26,50 +28,28 @@ export default function TeamDetailPage() {
   const params = useParams();
   const teamId = params.teamId as string;
   const router = useRouter();
-  const supabase = createClient();
+  const supabase = useMemo(() => createClient(), []);
   const { toast } = useToast();
 
   const [team, setTeam] = useState<Team | null>(null);
   const [isOwner, setIsOwner] = useState(false);
   const [loading, setLoading] = useState(true);
   const [userId, setUserId] = useState<string | null>(null);
+  const [traceId] = useState(() => `team-detail_${Date.now()}`);
 
-  useEffect(() => {
-    async function checkUser() {
-      try {
-        const { data: { user }, error } = await supabase.auth.getUser();
-        
-        if (error || !user) {
-          console.error('Error getting user:', error);
-          router.push('/login');
-          return;
-        }
-        
-        setUserId(user.id);
-        fetchTeam(user.id);
-      } catch (error) {
-        console.error('Error in auth check:', error);
-        router.push('/login');
-      }
-    }
-    
-    checkUser();
-  }, [teamId, fetchTeam, router, supabase.auth]);
-
-  async function fetchTeam(userId: string) {
+  const fetchTeam = useCallback(async (currentUserId: string) => {
     setLoading(true);
     try {
-      // Use get_user_teams function to get all teams for the user
-      const { data, error } = await supabase
-        .rpc('get_user_teams', {
-          p_user_id: userId
-        });
-        
+      // Use get_user_teams function to get all teams for the user.
+      const { data, error } = await supabase.rpc('get_user_teams', {
+        p_user_id: currentUserId,
+      });
+
       if (error) throw error;
-      
-      // Find the specific team by ID
-      const teamData = data?.find((t: Team) => t.id === teamId);
-      
+
+      // Find the specific team by ID.
+      const teamData = data?.find((candidate: Team) => candidate.id === teamId);
+
       if (!teamData) {
         toast({
           title: 'Team Not Found',
@@ -79,21 +59,66 @@ export default function TeamDetailPage() {
         router.push('/teams');
         return;
       }
-      
+
       setTeam(teamData);
       setIsOwner(teamData.is_owner || false);
-    } catch (error: any) {
-      console.error('Error fetching team:', error);
+    } catch (error: unknown) {
+      logger.error({
+        traceId,
+        scope: "team-detail-page",
+        message: "Failed to fetch team details.",
+        data: {
+          teamId,
+          userId: currentUserId,
+          error: error instanceof Error ? error.message : error,
+        },
+      });
       toast({
         title: 'Error',
-        description: error.message || 'Failed to load team details',
+        description: getUserErrorMessage(error, 'Failed to load team details'),
         variant: 'destructive',
       });
       router.push('/teams');
     } finally {
       setLoading(false);
     }
-  }
+  }, [router, supabase, teamId, toast, traceId]);
+
+  useEffect(() => {
+    async function checkUser() {
+      try {
+        const { data: { user }, error } = await supabase.auth.getUser();
+        
+        if (error || !user) {
+          logger.warn({
+            traceId,
+            scope: "team-detail-page",
+            message: "Missing authenticated user in team detail page.",
+            data: {
+              error: error?.message,
+            },
+          });
+          router.push('/login');
+          return;
+        }
+        
+        setUserId(user.id);
+        await fetchTeam(user.id);
+      } catch (error: unknown) {
+        logger.error({
+          traceId,
+          scope: "team-detail-page",
+          message: "Auth check failed on team detail page.",
+          data: {
+            error: error instanceof Error ? error.message : error,
+          },
+        });
+        router.push('/login');
+      }
+    }
+    
+    void checkUser();
+  }, [fetchTeam, router, supabase, traceId]);
 
   async function handleDeleteTeam() {
     if (!isOwner || !team) return;
@@ -104,7 +129,7 @@ export default function TeamDetailPage() {
     
     try {
       // Use delete_team RPC function
-      const { data, error } = await supabase
+      const { error } = await supabase
         .rpc('delete_team', {
           p_team_id: teamId,
           p_user_id: userId
@@ -118,11 +143,20 @@ export default function TeamDetailPage() {
       });
       
       router.push('/teams');
-    } catch (error: any) {
-      console.error('Error deleting team:', error);
+    } catch (error: unknown) {
+      logger.error({
+        traceId,
+        scope: "team-detail-page",
+        message: "Failed to delete team.",
+        data: {
+          teamId,
+          userId,
+          error: error instanceof Error ? error.message : error,
+        },
+      });
       toast({
         title: 'Error',
-        description: error.message || 'Failed to delete team',
+        description: getUserErrorMessage(error, 'Failed to delete team'),
         variant: 'destructive',
       });
     }
