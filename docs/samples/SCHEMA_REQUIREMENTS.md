@@ -16,6 +16,7 @@ This document defines top-level key requirements for JSON sample/evidence artifa
 | `docs/samples/security_baseline_validation_report_sample.json` | `generatedAt`, `environment`, `overallStatus`, `checks` |
 | `docs/samples/security_baseline_validation_report_production_sample.json` | `generatedAt`, `environment`, `overallStatus`, `checks` |
 | `docs/samples/security_rollout_gate_summary_sample.json` | `generatedAt`, `gateStatus`, `environments` |
+| `docs/samples/storage_buckets_response_sample.json` | `generatedAt`, `buckets` |
 | `supabase/SECURITY_VALIDATION_EVIDENCE_TEMPLATE.json` | `metadata`, `sqlVerification`, `decision` |
 | `supabase/SECURITY_VALIDATION_EVIDENCE_SAMPLE.json` | `metadata`, `sqlVerification`, `decision` |
 
@@ -25,3 +26,4 @@ This document defines top-level key requirements for JSON sample/evidence artifa
   - `docs/API_RELIABILITY_ALERTS.md`
   - `docs/API_HEALTH.md`
   - `docs/API_STORAGE_ANALYTICS.md`
+  - `docs/API_STORAGE_BUCKETS.md`

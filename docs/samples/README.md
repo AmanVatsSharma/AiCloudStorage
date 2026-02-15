@@ -13,6 +13,7 @@ Examples:
 - `security_baseline_validation_report_sample.json`
 - `security_baseline_validation_report_production_sample.json`
 - `security_rollout_gate_summary_sample.json`
+- `storage_buckets_response_sample.json`
 
 ## Usage Guidelines
 - Samples should be sanitized and non-sensitive.

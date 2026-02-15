@@ -25,6 +25,7 @@ This matrix maps templates, scripts, and sample artifacts to release lifecycle p
 | Integration readiness | Confirm reliability payload contract | API sample | `docs/samples/reliability_alerts_response_sample.json` |
 | Integration readiness | Confirm health payload contract | API sample | `docs/samples/health_response_sample.json` |
 | Integration readiness | Confirm storage analytics payload contract | API sample | `docs/samples/storage_analytics_report_sample.json` |
+| Integration readiness | Confirm storage bucket payload contract | API sample | `docs/samples/storage_buckets_response_sample.json` |
 | Release governance | Provide completed ticket example | Sample | `docs/samples/release_validation_ticket_sample.md` |
 | Incident readiness | Ensure response playbook available | Runbook | `docs/operations/INCIDENT_RESPONSE_RUNBOOK.md` |
 | Recovery readiness | Ensure DR drill procedure available | Runbook | `docs/operations/DISASTER_RECOVERY_RUNBOOK.md` |

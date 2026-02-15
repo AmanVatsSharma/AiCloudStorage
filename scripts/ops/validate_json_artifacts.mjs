@@ -21,6 +21,7 @@ const REQUIRED_KEYS_BY_FILE = {
     'checks',
   ],
   'docs/samples/security_rollout_gate_summary_sample.json': ['generatedAt', 'gateStatus', 'environments'],
+  'docs/samples/storage_buckets_response_sample.json': ['generatedAt', 'buckets'],
   'supabase/SECURITY_VALIDATION_EVIDENCE_TEMPLATE.json': ['metadata', 'sqlVerification', 'decision'],
   'supabase/SECURITY_VALIDATION_EVIDENCE_SAMPLE.json': ['metadata', 'sqlVerification', 'decision'],
 };

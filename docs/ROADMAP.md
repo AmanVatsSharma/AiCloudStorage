@@ -53,6 +53,7 @@
 - [x] Added automated security baseline validation runner with JSON report output
 - [x] Added file overwrite version archival with restore/download lifecycle support
 - [x] Validate security baseline migration in staging and production
+- [x] Added storage bucket management API and settings UI with governance controls
 
 ## Phase 1: Project Setup and Core Infrastructure
 - [x] Initialize project structure
@@ -93,10 +94,10 @@
   - [x] File sharing
   - [x] Version control
   - [x] Trash management
-- [ ] Storage management
+- [x] Storage management
   - [x] Storage quota display
   - [x] Usage statistics
-  - [ ] Bucket management UI
+  - [x] Bucket management UI
 - [ ] Search functionality
   - [x] Basic search
   - [x] Advanced filters

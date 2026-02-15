@@ -49,6 +49,7 @@ This module captures operational response procedures for reliability and complia
 - `docs/API_RELIABILITY_ALERTS.md`
 - `docs/API_HEALTH.md`
 - `docs/API_STORAGE_ANALYTICS.md`
+- `docs/API_STORAGE_BUCKETS.md`
 
 ## Security Validation Automation
 - Evidence generator script:

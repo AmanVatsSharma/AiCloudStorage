@@ -1,12 +1,13 @@
 import { DashboardShell } from '@/components/layout/DashboardShell';
 import { StoragePolicyForm } from '@/app/components/settings/StoragePolicyForm';
+import { StorageBucketManager } from '@/app/components/settings/StorageBucketManager';
 import { createServerClient } from '@/lib/supabase/server';
 import { redirect } from 'next/navigation';
 import { Metadata } from 'next';
 
 export const metadata: Metadata = {
   title: 'Settings - AI Cloud Storage',
-  description: 'Configure storage policy and governance defaults.',
+  description: 'Configure storage policies and bucket governance defaults.',
 };
 
 export default async function SettingsPage() {
@@ -25,10 +26,11 @@ export default async function SettingsPage() {
         <div>
           <h1 className="text-3xl font-bold tracking-tight">Settings</h1>
           <p className="text-muted-foreground mt-2">
-            Configure baseline storage governance controls for your account.
+            Configure baseline storage governance controls and bucket posture for your account.
           </p>
         </div>
         <StoragePolicyForm userId={session.user.id} />
+        <StorageBucketManager />
       </div>
     </DashboardShell>
   );

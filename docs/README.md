@@ -11,6 +11,7 @@
 - `API_RELIABILITY_ALERTS.md`
 - `API_HEALTH.md`
 - `API_STORAGE_ANALYTICS.md`
+- `API_STORAGE_BUCKETS.md`
 - `samples/README.md`
 - `samples/SCHEMA_REQUIREMENTS.md`
 - `samples/reliability_alerts_response_sample.json`
@@ -20,6 +21,7 @@
 - `samples/security_baseline_validation_report_sample.json`
 - `samples/security_baseline_validation_report_production_sample.json`
 - `samples/security_rollout_gate_summary_sample.json`
+- `samples/storage_buckets_response_sample.json`
 - `samples/release_validation_ticket_sample.md`
 
 ### Quickstart API Examples
