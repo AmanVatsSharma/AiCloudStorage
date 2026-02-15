@@ -25,6 +25,7 @@ This module powers file and folder management inside the dashboard:
 - Folder records may use `path = null`; file records must carry storage path.
 - Active explorer/search queries only include `is_trashed = false`.
 - Trash page queries only include `is_trashed = true`.
+- Soft delete now stamps `trashed_at` to support retention-window enforcement.
 
 ## Error and Logging Pattern
 - UI errors are surfaced with toast messages.
@@ -54,8 +55,9 @@ flowchart TD
   E -->|Preview| L[Open FilePreview]
   E -->|Tags| M[Open FileTags]
   E -->|Versions| N[Open FileVersionHistory]
-  E -->|Delete| T[Soft delete: set is_trashed=true]
+  E -->|Delete| T[Soft delete: set is_trashed=true and trashed_at=now]
   T --> U[Track audit event file.trash.move]
+  U --> V[Trash manager enforces retention before permanent delete]
   G --> D
   H --> D
   I --> O[Render search results]

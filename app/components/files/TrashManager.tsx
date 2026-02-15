@@ -8,6 +8,7 @@ import { useToast } from '@/components/ui/use-toast';
 import { trackAuditEvent } from '@/lib/audit';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Badge } from '@/components/ui/badge';
 import {
   Table,
   TableBody,
@@ -17,6 +18,7 @@ import {
   TableRow,
 } from '@/components/ui/table';
 import { FiRotateCcw, FiTrash2 } from 'react-icons/fi';
+import { formatRetentionCountdown, getPurgeEligibility } from '@/lib/storage/trash-policy';
 
 type TrashedFile = {
   id: string;
@@ -25,8 +27,14 @@ type TrashedFile = {
   type: string;
   path: string | null;
   is_folder: boolean;
+  trashed_at: string | null;
   updated_at: string;
   created_at: string;
+};
+
+type StoragePolicy = {
+  retention_days: number;
+  permanent_delete_enabled: boolean;
 };
 
 function formatBytes(bytes: number): string {
@@ -48,13 +56,17 @@ export function TrashManager() {
   const [loading, setLoading] = useState(true);
   const [busyFileId, setBusyFileId] = useState<string | null>(null);
   const [files, setFiles] = useState<TrashedFile[]>([]);
+  const [policy, setPolicy] = useState<StoragePolicy>({
+    retention_days: 30,
+    permanent_delete_enabled: false,
+  });
 
   const fetchTrashedFiles = useCallback(async (resolvedUserId: string) => {
     setLoading(true);
     try {
       const { data, error } = await supabase
         .from('files')
-        .select('id, name, size, type, path, is_folder, updated_at, created_at')
+        .select('id, name, size, type, path, is_folder, trashed_at, updated_at, created_at')
         .eq('user_id', resolvedUserId)
         .eq('is_trashed', true)
         .order('updated_at', { ascending: false });
@@ -90,6 +102,31 @@ export function TrashManager() {
     }
   }, [supabase, toast, traceId]);
 
+  const fetchStoragePolicy = useCallback(async (resolvedUserId: string) => {
+    try {
+      const { data, error } = await supabase
+        .from('storage_policies')
+        .select('retention_days, permanent_delete_enabled')
+        .eq('user_id', resolvedUserId)
+        .maybeSingle();
+
+      if (error) throw error;
+      if (data) {
+        setPolicy(data);
+      }
+    } catch (error: unknown) {
+      logger.warn({
+        traceId,
+        scope: 'trash-manager',
+        message: 'Failed to load storage policy; using defaults.',
+        data: {
+          userId: resolvedUserId,
+          error: error instanceof Error ? error.message : error,
+        },
+      });
+    }
+  }, [supabase, traceId]);
+
   useEffect(() => {
     const bootstrap = async () => {
       const {
@@ -108,11 +145,11 @@ export function TrashManager() {
       }
 
       setUserId(user.id);
-      await fetchTrashedFiles(user.id);
+      await Promise.all([fetchTrashedFiles(user.id), fetchStoragePolicy(user.id)]);
     };
 
     void bootstrap();
-  }, [fetchTrashedFiles, supabase, toast]);
+  }, [fetchStoragePolicy, fetchTrashedFiles, supabase, toast]);
 
   const handleRestore = async (file: TrashedFile) => {
     if (!userId) return;
@@ -123,6 +160,7 @@ export function TrashManager() {
         .from('files')
         .update({
           is_trashed: false,
+          trashed_at: null,
           updated_at: new Date().toISOString(),
         })
         .eq('id', file.id)
@@ -168,6 +206,27 @@ export function TrashManager() {
 
   const handlePermanentDelete = async (file: TrashedFile) => {
     if (!userId) return;
+
+    if (!policy.permanent_delete_enabled) {
+      toast({
+        title: 'Policy restriction',
+        description: 'Permanent delete is disabled by storage governance policy.',
+        variant: 'destructive',
+      });
+      return;
+    }
+
+    const purgeEligibility = getPurgeEligibility(file.trashed_at, policy.retention_days);
+    if (!purgeEligibility.eligible) {
+      toast({
+        title: 'Retention window active',
+        description: `Permanent delete available on ${new Date(
+          purgeEligibility.eligibleAt || Date.now()
+        ).toLocaleString()}.`,
+        variant: 'destructive',
+      });
+      return;
+    }
 
     const confirmed = window.confirm(`Permanently delete "${file.name}"? This cannot be undone.`);
     if (!confirmed) return;
@@ -240,6 +299,12 @@ export function TrashManager() {
     <Card>
       <CardHeader>
         <CardTitle>Trash Contents</CardTitle>
+        <div className="flex flex-wrap items-center gap-2 text-sm text-muted-foreground">
+          <span>Retention window: {policy.retention_days} days</span>
+          <Badge variant={policy.permanent_delete_enabled ? 'secondary' : 'outline'}>
+            Permanent delete {policy.permanent_delete_enabled ? 'enabled' : 'disabled'}
+          </Badge>
+        </div>
       </CardHeader>
       <CardContent>
         {loading ? (
@@ -254,40 +319,58 @@ export function TrashManager() {
                 <TableHead>Type</TableHead>
                 <TableHead>Size</TableHead>
                 <TableHead>Deleted At</TableHead>
+                <TableHead>Purge Eligibility</TableHead>
                 <TableHead className="text-right">Actions</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
-              {files.map((file) => (
-                <TableRow key={file.id}>
-                  <TableCell>{file.name}</TableCell>
-                  <TableCell>{file.is_folder ? 'Folder' : (file.type || 'Unknown')}</TableCell>
-                  <TableCell>{file.is_folder ? '-' : formatBytes(file.size)}</TableCell>
-                  <TableCell>{new Date(file.updated_at || file.created_at).toLocaleString()}</TableCell>
-                  <TableCell className="text-right">
-                    <div className="flex items-center justify-end gap-2">
-                      <Button
-                        size="sm"
-                        variant="outline"
-                        disabled={busyFileId === file.id}
-                        onClick={() => void handleRestore(file)}
+              {files.map((file) => {
+                const purgeEligibility = getPurgeEligibility(file.trashed_at, policy.retention_days);
+                const deleteDisabled =
+                  busyFileId === file.id ||
+                  !policy.permanent_delete_enabled ||
+                  !purgeEligibility.eligible;
+
+                return (
+                  <TableRow key={file.id}>
+                    <TableCell>{file.name}</TableCell>
+                    <TableCell>{file.is_folder ? 'Folder' : (file.type || 'Unknown')}</TableCell>
+                    <TableCell>{file.is_folder ? '-' : formatBytes(file.size)}</TableCell>
+                    <TableCell>
+                      {new Date(file.trashed_at || file.updated_at || file.created_at).toLocaleString()}
+                    </TableCell>
+                    <TableCell>
+                      <span
+                        className={purgeEligibility.eligible ? 'text-green-600 font-medium' : 'text-muted-foreground'}
                       >
-                        <FiRotateCcw className="h-4 w-4 mr-1" />
-                        Restore
-                      </Button>
-                      <Button
-                        size="sm"
-                        variant="destructive"
-                        disabled={busyFileId === file.id}
-                        onClick={() => void handlePermanentDelete(file)}
-                      >
-                        <FiTrash2 className="h-4 w-4 mr-1" />
-                        Delete Permanently
-                      </Button>
-                    </div>
-                  </TableCell>
-                </TableRow>
-              ))}
+                        {formatRetentionCountdown(purgeEligibility.remainingMs)}
+                      </span>
+                    </TableCell>
+                    <TableCell className="text-right">
+                      <div className="flex items-center justify-end gap-2">
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          disabled={busyFileId === file.id}
+                          onClick={() => void handleRestore(file)}
+                        >
+                          <FiRotateCcw className="h-4 w-4 mr-1" />
+                          Restore
+                        </Button>
+                        <Button
+                          size="sm"
+                          variant="destructive"
+                          disabled={deleteDisabled}
+                          onClick={() => void handlePermanentDelete(file)}
+                        >
+                          <FiTrash2 className="h-4 w-4 mr-1" />
+                          Delete Permanently
+                        </Button>
+                      </div>
+                    </TableCell>
+                  </TableRow>
+                );
+              })}
             </TableBody>
           </Table>
         )}

@@ -7,6 +7,7 @@ Current implementation:
 - Storage retention policy settings
 - Permanent delete enable/disable control
 - Audit event tracking for policy updates
+- Trash workflow enforcement (retention window + permanent delete toggle)
 
 ## Components
 - `StoragePolicyForm.tsx`

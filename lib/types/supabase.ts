@@ -96,6 +96,7 @@ export interface Database {
           is_folder: boolean;
           is_favorite: boolean;
           is_trashed: boolean;
+          trashed_at: string | null;
           metadata: Json | null;
         };
         Insert: {
@@ -111,6 +112,7 @@ export interface Database {
           is_folder?: boolean;
           is_favorite?: boolean;
           is_trashed?: boolean;
+          trashed_at?: string | null;
           metadata?: Json | null;
         };
         Update: {
@@ -126,6 +128,7 @@ export interface Database {
           is_folder?: boolean;
           is_favorite?: boolean;
           is_trashed?: boolean;
+          trashed_at?: string | null;
           metadata?: Json | null;
         };
       };

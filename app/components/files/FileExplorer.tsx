@@ -589,6 +589,7 @@ export function FileExplorer() {
           .from('files')
           .update({
             is_trashed: true,
+            trashed_at: new Date().toISOString(),
             updated_at: new Date().toISOString(),
           })
           .eq('id', file.id)
