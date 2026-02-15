@@ -52,6 +52,18 @@ npm run ops:probe -- \
   --scope global \
   --reliability-token "${RELIABILITY_ALERTS_API_TOKEN}"
 
+# Probe staging preset
+npm run ops:probe -- \
+  --base-url "https://staging.example.com" \
+  --scope global \
+  --reliability-token "${STAGING_RELIABILITY_ALERTS_API_TOKEN}"
+
+# Probe production preset
+npm run ops:probe -- \
+  --base-url "https://app.example.com" \
+  --scope global \
+  --reliability-token "${PROD_RELIABILITY_ALERTS_API_TOKEN}"
+
 # Validate JSON sample/evidence artifacts
 npm run ops:validate-json
 ```

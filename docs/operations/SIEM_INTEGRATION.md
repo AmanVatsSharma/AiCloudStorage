@@ -60,6 +60,22 @@ npm run ops:probe -- \
   --reliability-token "${RELIABILITY_ALERTS_API_TOKEN}"
 ```
 
+### Preset: Staging
+```bash
+npm run ops:probe -- \
+  --base-url "https://staging.example.com" \
+  --scope global \
+  --reliability-token "${STAGING_RELIABILITY_ALERTS_API_TOKEN}"
+```
+
+### Preset: Production
+```bash
+npm run ops:probe -- \
+  --base-url "https://app.example.com" \
+  --scope global \
+  --reliability-token "${PROD_RELIABILITY_ALERTS_API_TOKEN}"
+```
+
 Probe output sample:
 - `docs/samples/ops_probe_output_sample.json`
 

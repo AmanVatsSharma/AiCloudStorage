@@ -42,6 +42,7 @@ This module captures operational response procedures for reliability and complia
 - Probe automation script:
   - `npm run ops:probe -- --base-url https://<app-host> --scope global --reliability-token <token>`
   - sample output: `docs/samples/ops_probe_output_sample.json`
+  - staging/production presets: `docs/operations/SIEM_INTEGRATION.md`
 
 ## Related API Docs
 - `docs/API_RELIABILITY_ALERTS.md`
