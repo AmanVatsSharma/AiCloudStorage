@@ -9,11 +9,13 @@
 ## API References
 - `API_RELIABILITY_ALERTS.md`
 - `API_HEALTH.md`
+- `API_STORAGE_ANALYTICS.md`
 - `samples/README.md`
 - `samples/SCHEMA_REQUIREMENTS.md`
 - `samples/reliability_alerts_response_sample.json`
 - `samples/health_response_sample.json`
 - `samples/ops_probe_output_sample.json`
+- `samples/storage_analytics_report_sample.json`
 - `samples/release_validation_ticket_sample.md`
 
 ### Quickstart API Examples

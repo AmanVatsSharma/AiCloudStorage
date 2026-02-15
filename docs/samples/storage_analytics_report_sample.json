@@ -1,0 +1,39 @@
+{
+  "generatedAt": "2026-02-15T18:00:00.000Z",
+  "mode": "integration",
+  "actorId": "11111111-1111-1111-1111-111111111111",
+  "report": {
+    "totalItems": 120,
+    "totalFiles": 96,
+    "totalFolders": 20,
+    "trashedItems": 4,
+    "activeStorageBytes": 150000000,
+    "trashedStorageBytes": 700000,
+    "totalShares": 15,
+    "publicShares": 3,
+    "topFileTypes": [
+      {
+        "label": "image",
+        "count": 35,
+        "bytes": 43000000
+      },
+      {
+        "label": "application",
+        "count": 30,
+        "bytes": 82000000
+      }
+    ],
+    "uploadsLast30Days": [
+      {
+        "day": "2026-02-10",
+        "uploads": 3,
+        "bytes": 2200000
+      },
+      {
+        "day": "2026-02-14",
+        "uploads": 5,
+        "bytes": 4100000
+      }
+    ]
+  }
+}
