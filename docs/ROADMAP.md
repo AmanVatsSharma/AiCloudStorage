@@ -24,6 +24,7 @@
 - [x] Added health/readiness API endpoint and probe documentation
 - [x] Added centralized documentation index for architecture, APIs, and operations runbooks
 - [x] Added security validation evidence capture template for staging/production rollout
+- [x] Added API quickstart examples for reliability and health integrations
 - [ ] Validate security baseline migration in staging and production
 
 ## Phase 1: Project Setup and Core Infrastructure

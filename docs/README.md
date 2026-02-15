@@ -10,6 +10,17 @@
 - `API_RELIABILITY_ALERTS.md`
 - `API_HEALTH.md`
 
+### Quickstart API Examples
+```bash
+# Reliability alerts (integration mode, global scope)
+curl -sS \
+  -H "Authorization: Bearer ${RELIABILITY_ALERTS_API_TOKEN}" \
+  "https://<app-host>/api/reliability/alerts?scope=global"
+
+# Health/readiness probe
+curl -sS "https://<app-host>/api/health"
+```
+
 ## Security & Compliance
 - `AUDIT_LOGGING.md`
 - `ORG_IAM_FOUNDATION.md`

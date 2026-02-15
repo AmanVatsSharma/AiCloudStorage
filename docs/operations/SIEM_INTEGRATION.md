@@ -24,6 +24,22 @@ Integrate reliability alerts and security telemetry into external monitoring sys
    - `severity=warning` => backlog triage ticket
 4. Persist full JSON payload for audit history.
 
+## Health Probe Integration
+- Endpoint: `GET /api/health`
+- Purpose: deployment and uptime readiness checks.
+- Recommended cadence: 30-60 seconds for uptime probe, 5 minutes for readiness trend snapshots.
+
+### Health probe cURL
+```bash
+curl -sS "https://<app-host>/api/health"
+```
+
+### Suggested health alert routing
+- `status=degraded` with `supabase_public_config` warning:
+  - notify platform engineering immediately.
+- `status=degraded` with `openai_key_configured` warning:
+  - notify AI service owner; fallback mode remains operational.
+
 ## Example cURL
 ```bash
 curl -sS \
