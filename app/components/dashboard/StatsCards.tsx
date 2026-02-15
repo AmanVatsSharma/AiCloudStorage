@@ -47,7 +47,8 @@ export function StatsCards({ userId }: StatsCardsProps) {
         const { count: filesCount, error: filesError } = await supabase
           .from('files')
           .select('*', { count: 'exact', head: true })
-          .eq('user_id', userId);
+          .eq('user_id', userId)
+          .eq('is_trashed', false);
 
         if (filesError && filesError.code !== 'PGRST116') {
           // PGRST116 is "relation does not exist" which we might get if the table is newly created

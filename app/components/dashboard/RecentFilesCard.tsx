@@ -49,6 +49,7 @@ export function RecentFilesCard({ userId, className = '' }: RecentFilesCardProps
           .from('files')
           .select('*')
           .eq('user_id', userId)
+          .eq('is_trashed', false)
           .order('updated_at', { ascending: false })
           .limit(5);
 

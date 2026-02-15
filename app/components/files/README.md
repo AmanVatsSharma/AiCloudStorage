@@ -5,6 +5,7 @@ This module powers file and folder management inside the dashboard:
 - browsing folders,
 - upload (button + drag/drop),
 - move/copy/delete actions,
+- trash lifecycle (soft delete, restore, permanent delete),
 - preview, tags, version history, and share link generation.
 
 ## Key Components
@@ -15,12 +16,15 @@ This module powers file and folder management inside the dashboard:
 - `FileTags.tsx` — tag management dialog.
 - `FileVersionHistory.tsx` — historical version operations.
 - `FileSearch.tsx` — file/folder search input interactions.
+- `TrashManager.tsx` — trash listing, restore, and permanent delete workflow.
 
 ## Data Ownership Model
 - All file list/search operations are scoped by `user_id`.
 - Upload and move/copy storage paths are normalized to:
   - `<userId>/<folderId-or-root>/<fileName>`
 - Folder records may use `path = null`; file records must carry storage path.
+- Active explorer/search queries only include `is_trashed = false`.
+- Trash page queries only include `is_trashed = true`.
 
 ## Error and Logging Pattern
 - UI errors are surfaced with toast messages.
@@ -50,6 +54,8 @@ flowchart TD
   E -->|Preview| L[Open FilePreview]
   E -->|Tags| M[Open FileTags]
   E -->|Versions| N[Open FileVersionHistory]
+  E -->|Delete| T[Soft delete: set is_trashed=true]
+  T --> U[Track audit event file.trash.move]
   G --> D
   H --> D
   I --> O[Render search results]

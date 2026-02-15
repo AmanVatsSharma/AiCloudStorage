@@ -67,6 +67,7 @@ export function FavoritesCard({ userId, className = '' }: FavoritesCardProps) {
           .from('files')
           .select('*')
           .eq('user_id', userId)
+          .eq('is_trashed', false)
           .limit(4);
 
         if (error) {

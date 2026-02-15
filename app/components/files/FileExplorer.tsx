@@ -14,6 +14,7 @@ import { useToast } from '@/components/ui/use-toast';
 import { PostgrestError } from '@supabase/supabase-js';
 import { getUserErrorMessage } from '@/lib/errors';
 import { logger } from '@/lib/logger';
+import { trackAuditEvent } from '@/lib/audit';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -29,8 +30,10 @@ type FileItem = {
   type: string;
   path: string;
   created_at: string;
+  updated_at?: string;
   parent_id: string | null;
   is_folder: boolean;
+  is_trashed?: boolean;
 };
 
 // This component will handle generating and displaying thumbnails
@@ -328,7 +331,8 @@ export function FileExplorer() {
       let query = supabase
         .from('files')
         .select('*')
-        .eq('user_id', userId);
+        .eq('user_id', userId)
+        .eq('is_trashed', false);
       
       // Use "is" for null checks instead of "eq"
       if (parentId === null) {
@@ -566,41 +570,62 @@ export function FileExplorer() {
 
   const handleDeleteFiles = async () => {
     if (selectedFiles.length === 0) return;
+    if (!userId) {
+      toast({
+        title: 'Authentication Error',
+        description: 'User session is required to move files to trash.',
+        variant: 'destructive',
+      });
+      return;
+    }
     
     const confirmDelete = window.confirm(`Are you sure you want to delete ${selectedFiles.length} item(s)?`);
     if (!confirmDelete) return;
     
     try {
       for (const file of selectedFiles) {
-        // Delete from database
+        // Soft delete in database (Trash lifecycle).
         const { error: dbError } = await supabase
           .from('files')
-          .delete()
-          .eq('id', file.id);
+          .update({
+            is_trashed: true,
+            updated_at: new Date().toISOString(),
+          })
+          .eq('id', file.id)
+          .eq('user_id', userId);
         
         if (dbError) throw dbError;
-        
-        // If it's a file (not a folder), delete from storage
-        if (!file.is_folder) {
-          const { error: storageError } = await supabase.storage
-            .from('files')
-            .remove([file.path]);
-          
-          if (storageError) throw storageError;
-        }
       }
+
+      await trackAuditEvent({
+        action: 'file.trash.move',
+        resourceType: 'file',
+        details: {
+          count: selectedFiles.length,
+          fileIds: selectedFiles.map((file) => file.id),
+        },
+      });
       
       fetchFiles(currentFolder);
       setSelectedFiles([]);
       toast({
         title: 'Success',
-        description: 'Files deleted successfully',
+        description: 'Items moved to trash successfully',
       });
     } catch (error: unknown) {
-      const err = error as Error;
+      logger.error({
+        traceId,
+        scope: "file-explorer-delete",
+        message: "Failed to move files to trash.",
+        data: {
+          currentFolder,
+          selectedCount: selectedFiles.length,
+          error: error instanceof Error ? error.message : error,
+        },
+      });
       toast({
         title: 'Error',
-        description: err.message || 'Failed to delete files',
+        description: getUserErrorMessage(error, 'Failed to move files to trash'),
         variant: 'destructive',
       });
     }
@@ -647,6 +672,7 @@ export function FileExplorer() {
         .from('files')
         .select('*')
         .eq('user_id', userId)
+        .eq('is_trashed', false)
         .ilike('name', `%${query}%`)
         .order('is_folder', { ascending: false })
         .order('name');

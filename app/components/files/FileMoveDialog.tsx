@@ -88,6 +88,7 @@ export function FileMoveDialog({
         .select('*')
         .eq('is_folder', true)
         .eq('user_id', userId)
+        .eq('is_trashed', false)
         .order('name');
       
       if (parentId === null) {

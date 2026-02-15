@@ -47,7 +47,7 @@
   - [x] Folder creation/management
   - [x] File sharing
   - [ ] Version control
-  - [ ] Trash management
+  - [x] Trash management
 - [ ] Storage management
   - [x] Storage quota display
   - [ ] Usage statistics
