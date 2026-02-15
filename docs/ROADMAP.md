@@ -85,7 +85,7 @@
   - [x] User profile CRUD
   - [x] Avatar management
   - [x] Email verification
-- [ ] Role-based access control
+- [x] Role-based access control
   - [x] Role definitions
   - [x] Permission system
   - [x] Access control implementation
@@ -144,7 +144,7 @@
   - [x] Team CRUD
   - [x] Member management
   - [x] Team permissions
-- [ ] Audit system
+- [x] Audit system
   - [x] Activity logging
   - [x] Audit reports
   - [x] Compliance tools
