@@ -32,6 +32,7 @@
 - [x] Added reliability alerts API sample response artifact for integration testing
 - [x] Added health API sample response artifact for integration testing
 - [x] Added consolidated operations evidence pack checklist
+- [x] Added evidence artifact naming convention guides for samples and security evidence bundles
 - [ ] Validate security baseline migration in staging and production
 
 ## Phase 1: Project Setup and Core Infrastructure

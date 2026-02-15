@@ -71,6 +71,8 @@ Attach to release ticket:
   - `SECURITY_VALIDATION_EVIDENCE_TEMPLATE.md`
   - `SECURITY_VALIDATION_EVIDENCE_TEMPLATE.json`
   - (optional reference) `SECURITY_VALIDATION_EVIDENCE_SAMPLE.json`
+- Naming conventions for generated evidence files:
+  - `evidence/README.md`
 - Release ticket checklist template:
   - `docs/operations/RELEASE_VALIDATION_TEMPLATE.md`
 - Consolidated evidence pack checklist:

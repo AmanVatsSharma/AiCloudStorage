@@ -35,6 +35,8 @@ Use this checklist to assemble a complete release evidence bundle for staging an
 - [ ] All evidence file paths are listed in release ticket comments.
 - [ ] Raw logs/screenshots are attached or linked.
 - [ ] Go/No-Go decision and approver recorded with timestamp.
+- [ ] Evidence file naming matches convention:
+  - `supabase/evidence/README.md`
 
 ## 5) Optional Automation
 - [ ] Evidence skeleton generated via npm shortcut:

@@ -9,6 +9,7 @@
 ## API References
 - `API_RELIABILITY_ALERTS.md`
 - `API_HEALTH.md`
+- `samples/README.md`
 - `samples/reliability_alerts_response_sample.json`
 - `samples/health_response_sample.json`
 
@@ -32,6 +33,7 @@ curl -sS "https://<app-host>/api/health"
 - `../supabase/SECURITY_VALIDATION_EVIDENCE_TEMPLATE.json`
 - `../supabase/SECURITY_VALIDATION_EVIDENCE_SAMPLE.json`
 - `../supabase/scripts/generate_security_validation_evidence.mjs`
+- `../supabase/evidence/README.md`
 
 ```bash
 # Generate a validation evidence skeleton
