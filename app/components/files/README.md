@@ -18,6 +18,11 @@ This module powers file and folder management inside the dashboard:
 - `FileSearch.tsx` — file/folder search input interactions.
 - `TrashManager.tsx` — trash listing, restore, and permanent delete workflow.
 
+Associated dashboard views:
+- `/shared` — account-owned share links governance table.
+- `/favorites` — account favorite file/folder list.
+- `/recent` — recent account file/folder activity list.
+
 ## Data Ownership Model
 - All file list/search operations are scoped by `user_id`.
 - Upload and move/copy storage paths are normalized to:
