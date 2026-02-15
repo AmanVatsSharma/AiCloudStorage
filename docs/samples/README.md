@@ -16,3 +16,6 @@ Examples:
   - `docs/API_RELIABILITY_ALERTS.md`
   - `docs/API_HEALTH.md`
 - Update samples when response contracts change.
+- Keep required top-level keys aligned with:
+  - `docs/samples/SCHEMA_REQUIREMENTS.md`
+  - `scripts/ops/validate_json_artifacts.mjs`

@@ -10,6 +10,7 @@
 - `API_RELIABILITY_ALERTS.md`
 - `API_HEALTH.md`
 - `samples/README.md`
+- `samples/SCHEMA_REQUIREMENTS.md`
 - `samples/reliability_alerts_response_sample.json`
 - `samples/health_response_sample.json`
 - `samples/ops_probe_output_sample.json`
