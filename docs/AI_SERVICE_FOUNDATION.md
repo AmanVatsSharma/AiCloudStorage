@@ -20,6 +20,14 @@ Response:
 }
 ```
 
+## Implemented UI Consumer
+- Route: `/ai-tools`
+- Component: `SummaryWorkbench`
+- Behavior:
+  - calls `/api/ai/summarize`,
+  - shows provider (`openai` or fallback `heuristic`),
+  - writes audit events for success/failure.
+
 ## Reliability Strategy
 1. Try OpenAI when `OPENAI_API_KEY` is configured.
 2. If OpenAI fails, gracefully fallback to deterministic heuristic summarizer.

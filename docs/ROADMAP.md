@@ -10,6 +10,7 @@
 - [x] Added AI summarization API foundation with OpenAI + heuristic fallback
 - [x] Added organization IAM schema foundation and organizations management UI baseline
 - [x] Added storage governance policy settings baseline
+- [x] Added AI tools UI baseline (summary workbench)
 - [ ] Validate security baseline migration in staging and production
 
 ## Phase 1: Project Setup and Core Infrastructure
