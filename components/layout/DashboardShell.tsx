@@ -26,6 +26,7 @@ import {
   FiShield,
   FiBriefcase,
   FiCpu,
+  FiActivity,
 } from 'react-icons/fi'
 import Link from 'next/link'
 import { cn } from '@/lib/utils'
@@ -89,6 +90,11 @@ const sidebarItems = [
     title: 'Compliance',
     href: '/compliance',
     icon: FiShield,
+  },
+  {
+    title: 'Reliability',
+    href: '/reliability',
+    icon: FiActivity,
   },
   {
     title: 'Profile',
