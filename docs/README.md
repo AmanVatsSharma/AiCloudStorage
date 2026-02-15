@@ -50,6 +50,9 @@ npm run ops:probe -- \
   --base-url "https://<app-host>" \
   --scope global \
   --reliability-token "${RELIABILITY_ALERTS_API_TOKEN}"
+
+# Validate JSON sample/evidence artifacts
+npm run ops:validate-json
 ```
 
 ## AI Services

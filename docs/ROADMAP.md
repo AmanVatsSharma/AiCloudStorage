@@ -37,6 +37,7 @@
 - [x] Added operational probe output sample artifact for integration workflows
 - [x] Added release validation ticket sample artifact
 - [x] Added operations artifacts matrix for release lifecycle evidence mapping
+- [x] Added JSON artifact validation automation for sample/evidence contracts
 - [ ] Validate security baseline migration in staging and production
 
 ## Phase 1: Project Setup and Core Infrastructure
