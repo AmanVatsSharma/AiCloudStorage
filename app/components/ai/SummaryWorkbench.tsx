@@ -11,10 +11,20 @@ import { getUserErrorMessage } from '@/lib/errors';
 import { useToast } from '@/components/ui/use-toast';
 import { trackAuditEvent } from '@/lib/audit';
 import { Badge } from '@/components/ui/badge';
+import { formatUsd } from '@/lib/ai/cost-estimator';
 
 interface SummaryWorkbenchProps {
   userId: string;
 }
+
+type SummaryUsage = {
+  provider: 'openai' | 'heuristic';
+  inputChars: number;
+  outputChars: number;
+  inputTokens: number;
+  outputTokens: number;
+  estimatedCostUsd: number;
+};
 
 /**
  * Interactive AI summarization workbench (synchronous API mode).
@@ -26,6 +36,7 @@ export function SummaryWorkbench({ userId }: SummaryWorkbenchProps) {
   const [maxSentences, setMaxSentences] = useState(2);
   const [summary, setSummary] = useState('');
   const [provider, setProvider] = useState<'openai' | 'heuristic' | null>(null);
+  const [usage, setUsage] = useState<SummaryUsage | null>(null);
   const [loading, setLoading] = useState(false);
 
   const canSubmit = useMemo(() => input.trim().length > 0 && !loading, [input, loading]);
@@ -38,6 +49,7 @@ export function SummaryWorkbench({ userId }: SummaryWorkbenchProps) {
     setLoading(true);
     setSummary('');
     setProvider(null);
+    setUsage(null);
 
     try {
       const response = await fetch('/api/ai/summarize', {
@@ -55,24 +67,34 @@ export function SummaryWorkbench({ userId }: SummaryWorkbenchProps) {
       }
 
       const payload = await response.json();
-      setSummary(payload.summary || '');
-      setProvider(payload.provider || 'heuristic');
+      const summaryText = payload.summary || '';
+      const providerName: 'openai' | 'heuristic' = payload.provider === 'openai' ? 'openai' : 'heuristic';
+      const usagePayload = payload.usage as SummaryUsage | undefined;
+
+      setSummary(summaryText);
+      setProvider(providerName);
+      if (usagePayload) {
+        setUsage(usagePayload);
+      }
 
       await trackAuditEvent({
         action: 'ai.summary.generate',
         resourceType: 'ai_summary',
         resourceId: userId,
         details: {
-          provider: payload.provider,
+          provider: providerName,
           inputLength: normalizedText.length,
-          outputLength: payload.summary?.length ?? 0,
+          outputLength: summaryText.length,
+          inputTokens: usagePayload?.inputTokens,
+          outputTokens: usagePayload?.outputTokens,
+          estimatedCostUsd: usagePayload?.estimatedCostUsd,
           maxSentences,
         },
       });
 
       toast({
         title: 'Summary generated',
-        description: `Provider: ${payload.provider || 'heuristic'}`,
+        description: `Provider: ${providerName}`,
       });
     } catch (error: unknown) {
       logger.error({
@@ -151,6 +173,14 @@ export function SummaryWorkbench({ userId }: SummaryWorkbenchProps) {
               {provider && <Badge variant="secondary">{provider}</Badge>}
             </div>
             <p className="text-sm whitespace-pre-wrap leading-relaxed">{summary}</p>
+            {usage && (
+              <div className="mt-4 grid gap-2 text-xs text-muted-foreground md:grid-cols-2">
+                <p>Input: {usage.inputChars} chars / ~{usage.inputTokens} tokens</p>
+                <p>Output: {usage.outputChars} chars / ~{usage.outputTokens} tokens</p>
+                <p>Estimated cost: {formatUsd(usage.estimatedCostUsd)}</p>
+                <p>Provider metering: {usage.provider}</p>
+              </div>
+            )}
           </div>
         )}
       </CardContent>

@@ -16,7 +16,15 @@ Response:
 {
   "summary": "...",
   "provider": "openai | heuristic",
-  "maxSentences": 2
+  "maxSentences": 2,
+  "usage": {
+    "provider": "openai",
+    "inputChars": 1200,
+    "outputChars": 320,
+    "inputTokens": 300,
+    "outputTokens": 80,
+    "estimatedCostUsd": 0.00009
+  }
 }
 ```
 
@@ -37,12 +45,18 @@ Response:
 - `lib/ai/summarizer.ts`
   - `summarizeTextHeuristic`
   - `truncateForModel`
+- `lib/ai/cost-estimator.ts`
+  - token estimation heuristics
+  - provider-specific estimated cost envelope
 
 ## Test Coverage
 - `lib/ai/summarizer.test.ts`
   - sentence extraction behavior
   - empty input handling
   - deterministic truncation behavior
+- `lib/ai/cost-estimator.test.ts`
+  - token estimate behavior
+  - provider cost estimation behavior
 
 ## AI Summary Flowchart
 ```mermaid
@@ -54,9 +68,10 @@ flowchart TD
   D -->|Yes| F[Try OpenAI completion]
   F -->|Success| G[Return OpenAI summary]
   F -->|Failure| H[Log warning + fallback heuristic]
-  E --> I[Return summary payload]
+  E --> I[Estimate usage + cost]
   G --> I
   H --> I
+  I --> J[Return summary payload]
 ```
 
 ## Next Steps

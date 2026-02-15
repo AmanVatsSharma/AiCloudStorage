@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { logger } from '@/lib/logger';
 import { summarizeTextHeuristic, truncateForModel } from '@/lib/ai/summarizer';
+import { estimateAiUsage } from '@/lib/ai/cost-estimator';
 
 type SummarizeRequest = {
   text?: string;
@@ -98,10 +99,17 @@ export async function POST(request: NextRequest) {
       },
     });
 
+    const usage = estimateAiUsage({
+      provider,
+      inputText: text,
+      outputText: summary,
+    });
+
     return NextResponse.json({
       summary,
       provider,
       maxSentences,
+      usage,
     });
   } catch (error: unknown) {
     logger.error({

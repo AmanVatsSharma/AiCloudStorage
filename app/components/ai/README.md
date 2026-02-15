@@ -8,6 +8,7 @@ Current implementation:
   - captures user input,
   - calls `/api/ai/summarize`,
   - displays provider and summary output,
+  - displays estimated token/cost telemetry,
   - emits audit events for success/failure.
 
 Route:
@@ -19,7 +20,7 @@ flowchart TD
   A[User opens AI Tools page] --> B[Enter text + sentence target]
   B --> C[Submit to /api/ai/summarize]
   C --> D{API success?}
-  D -->|Yes| E[Render summary + provider badge]
+  D -->|Yes| E[Render summary + provider badge + usage telemetry]
   D -->|No| F[Show error toast]
   E --> G[Track audit success event]
   F --> H[Track audit failure event]
