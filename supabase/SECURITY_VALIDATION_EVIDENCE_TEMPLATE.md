@@ -2,6 +2,10 @@
 
 Use this template when validating security baseline migrations in staging and production.
 
+Companion machine-readable templates:
+- `SECURITY_VALIDATION_EVIDENCE_TEMPLATE.json`
+- `SECURITY_VALIDATION_EVIDENCE_SAMPLE.json`
+
 ---
 
 ## Validation Metadata
@@ -56,3 +60,9 @@ Attach or paste output from:
 | Action | Owner | Due Date | Priority |
 |---|---|---|---|
 |  |  |  |  |
+
+## Release Ticket Attachment Guidance
+1. Attach completed markdown template.
+2. Attach completed JSON template for automation/audit indexing.
+3. Attach raw SQL output and smoke-test evidence bundle.
+4. Reference all artifact links in final go/no-go ticket comment.

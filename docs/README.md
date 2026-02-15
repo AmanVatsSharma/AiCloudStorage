@@ -27,6 +27,8 @@ curl -sS "https://<app-host>/api/health"
 - `../supabase/SECURITY_BASELINE.md`
 - `../supabase/SECURITY_VALIDATION_RUNBOOK.md`
 - `../supabase/SECURITY_VALIDATION_EVIDENCE_TEMPLATE.md`
+- `../supabase/SECURITY_VALIDATION_EVIDENCE_TEMPLATE.json`
+- `../supabase/SECURITY_VALIDATION_EVIDENCE_SAMPLE.json`
 
 ## AI Services
 - `AI_SERVICE_FOUNDATION.md`

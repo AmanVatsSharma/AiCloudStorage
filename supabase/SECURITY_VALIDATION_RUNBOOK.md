@@ -14,6 +14,8 @@ Operationalize security migration validation for staging and production before/a
   - `scripts/security_baseline_validation.sql`
 - Evidence template:
   - `SECURITY_VALIDATION_EVIDENCE_TEMPLATE.md`
+  - `SECURITY_VALIDATION_EVIDENCE_TEMPLATE.json`
+  - `SECURITY_VALIDATION_EVIDENCE_SAMPLE.json`
 
 ## Environments
 - **Staging** (mandatory before production)
@@ -59,6 +61,8 @@ Attach to release ticket:
 - Final go/no-go decision and approver.
 - Completed template:
   - `SECURITY_VALIDATION_EVIDENCE_TEMPLATE.md`
+  - `SECURITY_VALIDATION_EVIDENCE_TEMPLATE.json`
+  - (optional reference) `SECURITY_VALIDATION_EVIDENCE_SAMPLE.json`
 
 ## Validation Flowchart
 ```mermaid

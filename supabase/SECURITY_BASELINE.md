@@ -93,3 +93,5 @@ flowchart TD
 - Runbook: `SECURITY_VALIDATION_RUNBOOK.md`
 - SQL checks: `scripts/security_baseline_validation.sql`
 - Evidence template: `SECURITY_VALIDATION_EVIDENCE_TEMPLATE.md`
+- JSON template: `SECURITY_VALIDATION_EVIDENCE_TEMPLATE.json`
+- Sample evidence: `SECURITY_VALIDATION_EVIDENCE_SAMPLE.json`
