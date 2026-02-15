@@ -67,11 +67,11 @@
   - [x] ESLint and project settings
   - [x] Jest testing setup
   - [x] CI/CD pipeline
-- [ ] NestJS Backend Setup
-  - [ ] Initialize NestJS project
-  - [ ] Create basic API structure
-  - [ ] Configure Supabase client in NestJS
-  - [ ] Implement authentication middleware
+- [ ] Backend API Service Setup (Next.js + Supabase)
+  - [x] Establish Next.js route handlers for core platform APIs
+  - [x] Configure Supabase server/client utilities for API access
+  - [x] Implement authenticated API handler patterns
+  - [ ] Add background job runner strategy for async workloads
 
 ## Phase 2: Authentication and User Management
 - [x] Implement authentication flow
@@ -103,8 +103,8 @@
   - [x] Advanced filters
   - [x] Metadata search
 
-## Phase 4: AI Integration with NestJS
-- [ ] Setup NestJS AI processing services
+## Phase 4: AI Integration with Next.js API Services
+- [ ] Setup AI processing services
   - [ ] Document processing pipeline
   - [ ] Integration with OpenAI APIs
   - [ ] File content extraction service
@@ -123,7 +123,7 @@
   - [ ] Auto-tagging
 
 ## Phase 5: Developer Platform
-- [ ] API development in NestJS
+- [ ] API development
   - [ ] REST API endpoints
   - [ ] GraphQL schema
   - [ ] API documentation
@@ -151,7 +151,7 @@
   - [ ] IP whitelisting
   - [ ] Security policies
 
-## Phase 7: AI Workflow Automation with NestJS
+## Phase 7: AI Workflow Automation
 - [ ] Workflow engine
   - [ ] Workflow definition
   - [ ] Action triggers
