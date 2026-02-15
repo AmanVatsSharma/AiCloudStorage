@@ -6,6 +6,7 @@ This matrix maps templates, scripts, and sample artifacts to release lifecycle p
 |---|---|---|---|
 | Pre-release planning | Define checklist + owners | Template | `docs/operations/RELEASE_VALIDATION_TEMPLATE.md` |
 | Pre-release planning | Define required evidence set | Checklist | `docs/operations/EVIDENCE_PACK_CHECKLIST.md` |
+| Pre-release planning | Generate release ticket skeleton | Script | `npm run ops:release-ticket` (`scripts/ops/generate_release_validation_ticket.mjs`) |
 | Pre-release planning | Seed security evidence file | Script | `npm run security:evidence` (`supabase/scripts/generate_security_validation_evidence.mjs`) |
 | Security validation | Validate RLS/policies/functions | SQL script | `supabase/scripts/security_baseline_validation.sql` |
 | Security validation | Record security verification results | Template (md/json) | `supabase/SECURITY_VALIDATION_EVIDENCE_TEMPLATE.md` / `.json` |

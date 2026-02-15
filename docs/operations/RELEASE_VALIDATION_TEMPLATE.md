@@ -5,6 +5,15 @@ Use this template for staging/production rollout tickets to ensure operational, 
 Reference sample:
 - `docs/samples/release_validation_ticket_sample.md`
 
+Generator shortcut:
+```bash
+npm run ops:release-ticket -- \
+  --release-id release-2026-02-15-01 \
+  --environment staging \
+  --owner platform.engineer@company.com \
+  --approver security.lead@company.com
+```
+
 ---
 
 ## Release Metadata

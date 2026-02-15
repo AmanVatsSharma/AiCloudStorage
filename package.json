@@ -11,7 +11,8 @@
     "test:watch": "jest --watch",
     "security:evidence": "node supabase/scripts/generate_security_validation_evidence.mjs",
     "ops:probe": "node scripts/ops/probe_endpoints.mjs",
-    "ops:validate-json": "node scripts/ops/validate_json_artifacts.mjs"
+    "ops:validate-json": "node scripts/ops/validate_json_artifacts.mjs",
+    "ops:release-ticket": "node scripts/ops/generate_release_validation_ticket.mjs"
   },
   "dependencies": {
     "@radix-ui/react-avatar": "^1.1.3",

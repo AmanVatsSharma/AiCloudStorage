@@ -20,6 +20,7 @@ This module captures operational response procedures for reliability and complia
 - `RELEASE_VALIDATION_TEMPLATE.md`
   - release-ticket checklist for security, reliability, and operational evidence capture.
   - sample ticket: `docs/samples/release_validation_ticket_sample.md`
+  - generator shortcut: `npm run ops:release-ticket -- --release-id ... --environment ... --owner ... --approver ...`
 - `EVIDENCE_PACK_CHECKLIST.md`
   - consolidated artifact checklist for security, readiness, and release-governance evidence.
 - `ARTIFACTS_MATRIX.md`

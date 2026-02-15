@@ -66,6 +66,13 @@ npm run ops:probe -- \
 
 # Validate JSON sample/evidence artifacts
 npm run ops:validate-json
+
+# Generate release validation ticket skeleton
+npm run ops:release-ticket -- \
+  --release-id release-2026-02-15-01 \
+  --environment staging \
+  --owner platform.engineer@company.com \
+  --approver security.lead@company.com
 ```
 
 ## AI Services
