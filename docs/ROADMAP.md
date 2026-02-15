@@ -56,6 +56,7 @@
 - [x] Added storage bucket management API and settings UI with governance controls
 - [x] Added Dockerfile-based deployment baseline and deployment runbook
 - [x] Added user-facing documentation set (user guide, feature reference, FAQ)
+- [x] Added developer-facing integration and SDK guidance documentation
 
 ## Phase 1: Project Setup and Core Infrastructure
 - [x] Initialize project structure
@@ -210,7 +211,7 @@
   - [x] User guides
   - [x] Feature documentation
   - [x] FAQ
-- [ ] Developer documentation
-  - [ ] SDK guides
-  - [ ] Integration guides
+- [x] Developer documentation
+  - [x] SDK guides
+  - [x] Integration guides
   - [x] Best practices

@@ -114,3 +114,7 @@ npm run ops:release-ticket -- \
 - `user/USER_GUIDE.md`
 - `user/FEATURES.md`
 - `user/FAQ.md`
+
+## Developer Documentation
+- `developer/SDK_GUIDE.md`
+- `developer/INTEGRATION_GUIDE.md`
