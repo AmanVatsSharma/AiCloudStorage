@@ -86,6 +86,11 @@ const sidebarItems = [
     icon: FiShield,
   },
   {
+    title: 'Compliance',
+    href: '/compliance',
+    icon: FiShield,
+  },
+  {
     title: 'Profile',
     href: '/profile',
     icon: FiUser,

@@ -102,7 +102,7 @@
 - [ ] Audit system
   - [x] Activity logging
   - [x] Audit reports
-  - [ ] Compliance tools
+  - [x] Compliance tools
 - [ ] Advanced security
   - [x] 2FA setup interface
   - [ ] E2E encryption
