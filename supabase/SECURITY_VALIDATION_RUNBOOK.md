@@ -27,7 +27,7 @@ Operationalize security migration validation for staging and production before/a
 3. Confirm incident response on-call is aware of rollout window.
 4. Generate fresh evidence skeleton from template:
    ```bash
-   node supabase/scripts/generate_security_validation_evidence.mjs \
+   npm run security:evidence -- \
      --environment staging \
      --validator platform.engineer@company.com \
      --approver security.lead@company.com \

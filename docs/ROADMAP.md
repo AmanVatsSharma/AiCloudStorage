@@ -27,6 +27,7 @@
 - [x] Added API quickstart examples for reliability and health integrations
 - [x] Added machine-readable security validation evidence JSON template and sample
 - [x] Added security validation evidence skeleton generator script
+- [x] Added npm shortcut for generating security validation evidence skeletons
 - [ ] Validate security baseline migration in staging and production
 
 ## Phase 1: Project Setup and Core Infrastructure

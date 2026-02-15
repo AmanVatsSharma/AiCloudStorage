@@ -31,6 +31,15 @@ curl -sS "https://<app-host>/api/health"
 - `../supabase/SECURITY_VALIDATION_EVIDENCE_SAMPLE.json`
 - `../supabase/scripts/generate_security_validation_evidence.mjs`
 
+```bash
+# Generate a validation evidence skeleton
+npm run security:evidence -- \
+  --environment staging \
+  --validator platform.engineer@company.com \
+  --approver security.lead@company.com \
+  --ticket REL-1234
+```
+
 ## AI Services
 - `AI_SERVICE_FOUNDATION.md`
 

@@ -8,7 +8,8 @@
     "start": "next start",
     "lint": "next lint",
     "test": "jest --passWithNoTests",
-    "test:watch": "jest --watch"
+    "test:watch": "jest --watch",
+    "security:evidence": "node supabase/scripts/generate_security_validation_evidence.mjs"
   },
   "dependencies": {
     "@radix-ui/react-avatar": "^1.1.3",
