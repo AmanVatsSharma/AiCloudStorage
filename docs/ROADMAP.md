@@ -43,6 +43,7 @@
 - [x] Added operations documentation changelog for sprint-by-sprint artifact tracking
 - [x] Added staging/production probe command presets for ops automation
 - [x] Added release validation ticket generator automation script
+- [x] Replaced analytics placeholder with live storage analytics dashboard
 - [ ] Validate security baseline migration in staging and production
 
 ## Phase 1: Project Setup and Core Infrastructure
@@ -86,7 +87,7 @@
   - [x] Trash management
 - [ ] Storage management
   - [x] Storage quota display
-  - [ ] Usage statistics
+  - [x] Usage statistics
   - [ ] Bucket management UI
 - [ ] Search functionality
   - [ ] Basic search
