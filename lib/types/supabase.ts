@@ -552,6 +552,47 @@ export interface Database {
           created_at: string;
         }>;
       };
+      get_organization_members: {
+        Args: {
+          p_organization_id: string;
+          p_user_id: string;
+        };
+        Returns: Array<{
+          id: string;
+          organization_id: string;
+          user_id: string;
+          role: OrganizationRole;
+          created_at: string;
+          email: string | null;
+          full_name: string | null;
+          avatar_url: string | null;
+        }>;
+      };
+      update_organization_member_role: {
+        Args: {
+          p_organization_id: string;
+          p_actor_user_id: string;
+          p_member_id: string;
+          p_new_role: OrganizationRole;
+        };
+        Returns: boolean;
+      };
+      remove_organization_member: {
+        Args: {
+          p_organization_id: string;
+          p_actor_user_id: string;
+          p_member_id: string;
+        };
+        Returns: boolean;
+      };
+      revoke_organization_invitation: {
+        Args: {
+          p_organization_id: string;
+          p_actor_user_id: string;
+          p_invitation_id: string;
+        };
+        Returns: boolean;
+      };
       [key: string]: {
         Args: Record<string, unknown>;
         Returns: unknown;

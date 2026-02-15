@@ -30,8 +30,68 @@ export function getInvitableOrganizationRoles(actorRole: OrganizationRole): Orga
  */
 export function canInviteOrganizationRole(
   actorRole: OrganizationRole,
-  targetRole: OrganizationRole
+  invitedRole: OrganizationRole
 ): boolean {
   const allowedRoles = getInvitableOrganizationRoles(actorRole);
-  return allowedRoles.includes(targetRole);
+  return allowedRoles.includes(invitedRole);
+}
+
+/**
+ * Whether actor can open organization member-management actions.
+ */
+export function canManageOrganizationMembers(actorRole: OrganizationRole): boolean {
+  return actorRole === 'owner' || actorRole === 'admin';
+}
+
+/**
+ * Returns assignable roles for member role updates.
+ */
+export function assignableOrganizationRolesFor(actorRole: OrganizationRole): OrganizationRole[] {
+  return getInvitableOrganizationRoles(actorRole);
+}
+
+/**
+ * Determines whether actor can change a member role.
+ */
+export function canChangeOrganizationMemberRole(
+  actorRole: OrganizationRole,
+  targetRole: OrganizationRole,
+  desiredRole: OrganizationRole,
+  actorUserId: string,
+  targetUserId: string
+): boolean {
+  if (!canManageOrganizationMembers(actorRole)) return false;
+  if (targetRole === 'owner') return false;
+  if (actorRole === 'admin' && targetRole === 'admin') return false;
+  if (actorUserId === targetUserId) return false;
+
+  return assignableOrganizationRolesFor(actorRole).includes(desiredRole);
+}
+
+/**
+ * Determines whether actor can remove a member from organization.
+ */
+export function canRemoveOrganizationMember(
+  actorRole: OrganizationRole,
+  targetRole: OrganizationRole,
+  actorUserId: string,
+  targetUserId: string
+): boolean {
+  if (!canManageOrganizationMembers(actorRole)) return false;
+  if (targetRole === 'owner') return false;
+  if (actorRole === 'admin' && targetRole === 'admin') return false;
+  if (actorUserId === targetUserId) return false;
+  return true;
+}
+
+/**
+ * Whether actor can revoke an invitation for the target role.
+ */
+export function canRevokeOrganizationInvitation(
+  actorRole: OrganizationRole,
+  invitationRole: OrganizationRole
+): boolean {
+  if (!canManageOrganizationMembers(actorRole)) return false;
+  if (actorRole === 'owner') return true;
+  return invitationRole === 'member' || invitationRole === 'billing_viewer';
 }

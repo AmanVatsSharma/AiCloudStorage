@@ -9,6 +9,7 @@
 - [x] Added enterprise security baseline migration (RLS + storage prefix isolation)
 - [x] Added AI summarization API foundation with OpenAI + heuristic fallback
 - [x] Added organization IAM schema foundation and organizations management UI baseline
+- [x] Added organization member-management workflow with role updates and invitation revocation
 - [x] Added storage governance policy settings baseline
 - [x] Added AI tools UI baseline (summary workbench)
 - [ ] Validate security baseline migration in staging and production
@@ -42,8 +43,8 @@
   - [x] Email verification
 - [ ] Role-based access control
   - [x] Role definitions
-  - [ ] Permission system
-  - [ ] Access control implementation
+  - [x] Permission system
+  - [x] Access control implementation
 
 ## Phase 3: Core Storage Features
 - [x] File management (Supabase)
@@ -98,7 +99,7 @@
 - [x] Team management
   - [x] Team CRUD
   - [x] Member management
-  - [ ] Team permissions
+  - [x] Team permissions
 - [ ] Audit system
   - [x] Activity logging
   - [x] Audit reports

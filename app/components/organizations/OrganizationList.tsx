@@ -1,9 +1,11 @@
 'use client';
 
 import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useRouter } from 'next/navigation';
 import { createClient } from '@/lib/supabase/client';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
 import { logger } from '@/lib/logger';
 import { useToast } from '@/components/ui/use-toast';
 import { getUserErrorMessage } from '@/lib/errors';
@@ -32,6 +34,7 @@ interface OrganizationListProps {
  * Read-only organization list for current user.
  */
 export function OrganizationList({ userId, refreshKey }: OrganizationListProps) {
+  const router = useRouter();
   const supabase = useMemo(() => createClient(), []);
   const { toast } = useToast();
   const [traceId] = useState(() => `organization-list_${Date.now()}`);
@@ -123,6 +126,15 @@ export function OrganizationList({ userId, refreshKey }: OrganizationListProps) 
           <CardContent className="space-y-1 text-sm text-muted-foreground">
             <p>Slug: <span className="font-mono">{organization.slug}</span></p>
             <p>Created: {new Date(organization.created_at).toLocaleDateString()}</p>
+            <div className="pt-2">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => router.push(`/organizations/${organization.id}/members`)}
+              >
+                Manage Members
+              </Button>
+            </div>
           </CardContent>
         </Card>
       ))}
