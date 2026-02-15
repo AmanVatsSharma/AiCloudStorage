@@ -31,6 +31,9 @@ jobs:
       - name: Unit tests
         run: npm test
 
+      - name: Validate JSON artifact contracts
+        run: npm run ops:validate-json
+
       - name: Production build
         env:
           NEXT_PUBLIC_SUPABASE_URL: https://placeholder.supabase.co
