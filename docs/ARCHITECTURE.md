@@ -81,3 +81,10 @@ flowchart LR
 2. **Operational reliability** (tests, explicit error paths, deterministic behavior).
 3. **Auditability** (event capture and compliance-friendly data model).
 4. **Incremental AI expansion** without destabilizing core storage workflows.
+
+---
+
+## Operational Runbook References
+- `docs/operations/INCIDENT_RESPONSE_RUNBOOK.md`
+- `docs/operations/DISASTER_RECOVERY_RUNBOOK.md`
+- `docs/operations/README.md`
