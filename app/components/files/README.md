@@ -28,6 +28,9 @@ Associated dashboard views:
 - Upload and move/copy storage paths are normalized to:
   - `<userId>/<folderId-or-root>/<fileName>`
 - Folder records may use `path = null`; file records must carry storage path.
+- Overwrite uploads now archive the prior object into:
+  - `versions/<fileId>/<version>/<sanitizedFileName>`
+  - with matching `file_versions` row for restore/download actions.
 - Active explorer/search queries only include `is_trashed = false`.
 - Advanced search applies a two-stage pipeline:
   - indexed filters in Supabase query (name, scope, updated date range),
@@ -54,8 +57,12 @@ flowchart TD
   B -->|No user| C[Show auth error toast]
   B -->|User found| D[Fetch files by parent_id + user_id]
   D --> E{User action}
-  E -->|Upload| F[Upload to storage bucket]
-  F --> G[Insert file record in DB]
+  E -->|Upload| F{Existing file with same name in folder?}
+  F -->|Yes| F1[Archive prior object to versions path]
+  F1 --> F2[Insert file_versions record]
+  F -->|No| G[Upload to storage bucket]
+  F2 --> G
+  G --> H1[Upsert or insert active file row]
   E -->|Create folder| H[Insert folder record in DB]
   E -->|Search| I[Run indexed DB search by name and scope]
   I --> I2[Apply advanced filters: category/size/metadata/date]
@@ -67,7 +74,7 @@ flowchart TD
   E -->|Delete| T[Soft delete: set is_trashed=true and trashed_at=now]
   T --> U[Track audit event file.trash.move]
   U --> V[Trash manager enforces retention before permanent delete]
-  G --> D
+  H1 --> D
   H --> D
   I2 --> O[Render search results]
   J --> D

@@ -15,6 +15,7 @@ import {
 } from '@/components/ui/dialog';
 import { getUserErrorMessage } from '@/lib/errors';
 import { logger } from '@/lib/logger';
+import { buildVersionObjectPath } from '@/lib/files/versioning';
 
 interface Version {
   id: string;
@@ -80,7 +81,7 @@ export function FileVersionHistory({ file, isOpen, onClose }: FileVersionHistory
 
   const handleDownloadVersion = async (version: Version) => {
     try {
-      const versionPath = `versions/${file.id}/${version.version}/${file.name}`;
+      const versionPath = buildVersionObjectPath(file.id, version.version, file.name);
       
       const { data, error } = await supabase.storage
         .from('files')
@@ -118,7 +119,7 @@ export function FileVersionHistory({ file, isOpen, onClose }: FileVersionHistory
   const handleRestoreVersion = async (version: Version) => {
     try {
       // Copy the version file to the main file path
-      const sourcePath = `versions/${file.id}/${version.version}/${file.name}`;
+      const sourcePath = buildVersionObjectPath(file.id, version.version, file.name);
       
       // First download the version file
       const { data: fileData, error: downloadError } = await supabase.storage
@@ -176,7 +177,7 @@ export function FileVersionHistory({ file, isOpen, onClose }: FileVersionHistory
     }
     
     try {
-      const versionPath = `versions/${file.id}/${version.version}/${file.name}`;
+      const versionPath = buildVersionObjectPath(file.id, version.version, file.name);
       
       // Delete from storage
       const { error: storageError } = await supabase.storage

@@ -21,6 +21,7 @@ import {
   hasActiveSearchCriteria,
   normalizeFileSearchRequest,
 } from '@/lib/files/search';
+import { buildVersionObjectPath, getNextVersionNumber } from '@/lib/files/versioning';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -218,6 +219,175 @@ export function FileExplorer() {
     void getUserId();
   }, [supabase, toast, traceId]);
 
+  const getFilePath = useCallback(
+    (fileName: string) => `${userId}/${currentFolder || 'root'}/${fileName}`,
+    [currentFolder, userId]
+  );
+
+  /**
+   * Resolve an existing non-trashed file with same name in current folder.
+   */
+  const findExistingFileRecord = useCallback(
+    async (fileName: string) => {
+      if (!userId) return null;
+
+      let query = supabase
+        .from('files')
+        .select('id, name, path, size')
+        .eq('user_id', userId)
+        .eq('name', fileName)
+        .eq('is_folder', false)
+        .eq('is_trashed', false);
+
+      query = currentFolder === null ? query.is('parent_id', null) : query.eq('parent_id', currentFolder);
+      const { data, error } = await query.order('updated_at', { ascending: false }).limit(1).maybeSingle();
+
+      // PGRST116 can occur for "no rows"; this is expected for new files.
+      if (error && error.code !== 'PGRST116') throw error;
+      return data;
+    },
+    [currentFolder, supabase, userId]
+  );
+
+  /**
+   * Persist current object snapshot before overwriting an existing file.
+   */
+  const archiveCurrentFileVersion = useCallback(
+    async (record: { id: string; name: string; path: string | null; size: number }) => {
+      if (!record.path) {
+        throw new Error('Cannot archive version: existing file path is empty.');
+      }
+
+      const { data: versionRows, error: versionError } = await supabase
+        .from('file_versions')
+        .select('version')
+        .eq('file_id', record.id)
+        .order('version', { ascending: false })
+        .limit(1);
+
+      if (versionError) throw versionError;
+      const latestVersion = versionRows?.[0]?.version ?? 0;
+      const nextVersion = getNextVersionNumber(latestVersion);
+      const versionObjectPath = buildVersionObjectPath(record.id, nextVersion, record.name);
+
+      const { error: copyError } = await supabase.storage
+        .from('files')
+        .copy(record.path, versionObjectPath);
+
+      if (copyError) throw copyError;
+
+      const { error: insertError } = await supabase.from('file_versions').insert({
+        file_id: record.id,
+        version: nextVersion,
+        size: record.size,
+      });
+
+      if (insertError) {
+        // Best-effort rollback to avoid orphaned archived object.
+        await supabase.storage.from('files').remove([versionObjectPath]);
+        throw insertError;
+      }
+
+      return nextVersion;
+    },
+    [supabase]
+  );
+
+  const uploadSingleFile = useCallback(
+    async (file: File, source: 'drop' | 'picker', positionLabel: string) => {
+      if (!userId) {
+        throw new Error('Authenticated user is required for uploads.');
+      }
+
+      const filePath = getFilePath(file.name);
+      const existingRecord = await findExistingFileRecord(file.name);
+      let archivedVersion: number | null = null;
+
+      logger.debug({
+        traceId,
+        scope: 'file-explorer-upload',
+        message: 'Preparing file upload request.',
+        data: {
+          source,
+          positionLabel,
+          fileName: file.name,
+          filePath,
+          currentFolder,
+          hasExistingRecord: Boolean(existingRecord),
+        },
+      });
+
+      if (existingRecord) {
+        archivedVersion = await archiveCurrentFileVersion(existingRecord);
+        logger.info({
+          traceId,
+          scope: 'file-explorer-upload',
+          message: 'Archived prior file version before overwrite.',
+          data: {
+            fileId: existingRecord.id,
+            fileName: existingRecord.name,
+            archivedVersion,
+          },
+        });
+      }
+
+      const { error: uploadError } = await supabase.storage
+        .from('files')
+        .upload(filePath, file, { upsert: true });
+      if (uploadError) throw uploadError;
+
+      if (existingRecord) {
+        const { error: updateError } = await supabase
+          .from('files')
+          .update({
+            size: file.size,
+            type: file.type,
+            path: filePath,
+            updated_at: new Date().toISOString(),
+            is_trashed: false,
+            trashed_at: null,
+          })
+          .eq('id', existingRecord.id)
+          .eq('user_id', userId);
+
+        if (updateError) throw updateError;
+      } else {
+        const { error: insertError } = await supabase.from('files').insert({
+          name: file.name,
+          size: file.size,
+          type: file.type,
+          path: filePath,
+          parent_id: currentFolder,
+          is_folder: false,
+          user_id: userId,
+        });
+
+        if (insertError) throw insertError;
+      }
+
+      await trackAuditEvent({
+        action: existingRecord ? 'file.upload.overwrite' : 'file.upload.create',
+        resourceType: 'file',
+        resourceId: existingRecord?.id,
+        details: {
+          source,
+          fileName: file.name,
+          filePath,
+          archivedVersion,
+        },
+      });
+    },
+    [
+      archiveCurrentFileVersion,
+      currentFolder,
+      findExistingFileRecord,
+      getFilePath,
+      supabase,
+      traceId,
+      userId,
+    ]
+  );
+
   // Drag and drop functionality
   const onDrop = useCallback(async (acceptedFiles: File[]) => {
     if (acceptedFiles.length === 0) return;
@@ -235,76 +405,37 @@ export function FileExplorer() {
     setIsUploading(true);
     
     try {
+      let successCount = 0;
       for (let i = 0; i < acceptedFiles.length; i++) {
         const file = acceptedFiles[i];
-        
-        // Use consistent path format that worked in the test function
-        const filePath = `${userId}/${currentFolder || 'root'}/${file.name}`;
-        logger.debug({
-          traceId,
-          scope: "file-explorer-upload",
-          message: "Uploading dropped file.",
-          data: {
-            position: `${i + 1}/${acceptedFiles.length}`,
-            fileName: file.name,
-            filePath,
-            currentFolder,
-          },
-        });
-        
-        // Upload file to storage - simplified approach
-        const { error: uploadError } = await supabase.storage
-          .from('files')
-          .upload(filePath, file, { upsert: true });
-        
-        if (uploadError) {
+        try {
+          await uploadSingleFile(file, 'drop', `${i + 1}/${acceptedFiles.length}`);
+          successCount += 1;
+        } catch (uploadError: unknown) {
           logger.error({
             traceId,
             scope: "file-explorer-upload",
-            message: "Storage upload failed for dropped file.",
-            data: { fileName: file.name, uploadError },
+            message: "Dropped file upload failed.",
+            data: {
+              fileName: file.name,
+              error: uploadError instanceof Error ? uploadError.message : uploadError,
+            },
           });
           toast({
             title: 'Upload Failed',
-            description: uploadError.message,
+            description: getUserErrorMessage(uploadError, `Failed to upload ${file.name}`),
             variant: 'destructive',
           });
-          continue; // Try the next file if there is one
         }
-        
-        // Create database entry
-        const { error: dbError } = await supabase.from('files').insert({
-          name: file.name,
-          size: file.size,
-          type: file.type,
-          path: filePath,
-          parent_id: currentFolder,
-          is_folder: false,
-          user_id: userId,
-        });
-        
-        if (dbError) {
-          logger.error({
-            traceId,
-            scope: "file-explorer-upload",
-            message: "Database insert failed for dropped file.",
-            data: { fileName: file.name, dbError },
-          });
-          toast({
-            title: 'Database Error',
-            description: dbError.message,
-            variant: 'destructive',
-          });
-          continue;
-        }
-        
+      }
+
+      if (successCount > 0) {
+        fetchFiles(currentFolder);
         toast({
-          title: 'Success',
-          description: `${file.name} uploaded successfully`,
+          title: 'Upload complete',
+          description: `${successCount} file(s) uploaded successfully.`,
         });
       }
-      
-      fetchFiles(currentFolder);
     } catch (error: unknown) {
       logger.error({
         traceId,
@@ -322,7 +453,7 @@ export function FileExplorer() {
     }
   // fetchFiles is intentionally omitted to avoid unstable callback loops.
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [currentFolder, supabase, toast, traceId, userId]);
+  }, [currentFolder, toast, traceId, uploadSingleFile, userId]);
   
   const { getRootProps, getInputProps, isDragActive } = useDropzone({ 
     onDrop,
@@ -451,76 +582,37 @@ export function FileExplorer() {
     setIsUploading(true);
     
     try {
+      let successCount = 0;
       for (let i = 0; i < uploadFiles.length; i++) {
         const file = uploadFiles[i];
-        
-        // Use consistent path format that worked in the test function
-        const filePath = `${userId}/${currentFolder || 'root'}/${file.name}`;
-        logger.debug({
-          traceId,
-          scope: "file-explorer-upload",
-          message: "Uploading selected file.",
-          data: {
-            position: `${i + 1}/${uploadFiles.length}`,
-            fileName: file.name,
-            filePath,
-            currentFolder,
-          },
-        });
-        
-        // Upload file to storage - simplified approach
-        const { error: uploadError } = await supabase.storage
-          .from('files')
-          .upload(filePath, file, { upsert: true });
-        
-        if (uploadError) {
+        try {
+          await uploadSingleFile(file, 'picker', `${i + 1}/${uploadFiles.length}`);
+          successCount += 1;
+        } catch (uploadError: unknown) {
           logger.error({
             traceId,
             scope: "file-explorer-upload",
             message: "Storage upload failed for selected file.",
-            data: { fileName: file.name, uploadError },
+            data: {
+              fileName: file.name,
+              error: uploadError instanceof Error ? uploadError.message : uploadError,
+            },
           });
           toast({
             title: 'Upload Failed',
-            description: uploadError.message,
+            description: getUserErrorMessage(uploadError, `Failed to upload ${file.name}`),
             variant: 'destructive',
           });
-          continue; // Try the next file if there is one
         }
-        
-        // Create database entry
-        const { error: dbError } = await supabase.from('files').insert({
-          name: file.name,
-          size: file.size,
-          type: file.type,
-          path: filePath,
-          parent_id: currentFolder,
-          is_folder: false,
-          user_id: userId,
-        });
-        
-        if (dbError) {
-          logger.error({
-            traceId,
-            scope: "file-explorer-upload",
-            message: "Database insert failed for selected file.",
-            data: { fileName: file.name, dbError },
-          });
-          toast({
-            title: 'Database Error',
-            description: dbError.message,
-            variant: 'destructive',
-          });
-          continue;
-        }
-        
+      }
+
+      if (successCount > 0) {
+        fetchFiles(currentFolder);
         toast({
-          title: 'Success',
-          description: `${file.name} uploaded successfully`,
+          title: 'Upload complete',
+          description: `${successCount} file(s) uploaded successfully.`,
         });
       }
-      
-      fetchFiles(currentFolder);
     } catch (error: unknown) {
       logger.error({
         traceId,
