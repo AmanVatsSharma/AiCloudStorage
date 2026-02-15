@@ -9,6 +9,13 @@ import { Input } from '@/components/ui/input';
 import { useToast } from '@/components/ui/use-toast';
 import { AuthError } from '@supabase/supabase-js';
 
+const DEMO_EMAIL = 'demo@gmail.com';
+const DEMO_PASSWORD = 'Password@123';
+
+function isAlreadyRegisteredError(message: string): boolean {
+  return /(already registered|already exists|user already)/i.test(message);
+}
+
 export default function LoginPage() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -16,6 +23,16 @@ export default function LoginPage() {
   const router = useRouter();
   const { toast } = useToast();
   const supabase = createClient();
+
+  const completeLogin = () => {
+    toast({
+      title: 'Success',
+      description: 'You have been logged in successfully.',
+    });
+
+    router.push('/dashboard');
+    router.refresh();
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -31,18 +48,94 @@ export default function LoginPage() {
         throw error;
       }
 
-      toast({
-        title: 'Success',
-        description: 'You have been logged in successfully.',
+      console.info('auth-login-debug: standard sign-in successful', {
+        email,
       });
-
-      router.push('/dashboard');
-      router.refresh();
+      completeLogin();
     } catch (error: unknown) {
       const authError = error as AuthError;
+      console.error('auth-login-debug: standard sign-in failed', {
+        email,
+        error: authError.message,
+      });
       toast({
         title: 'Error',
         description: authError.message || 'Failed to sign in',
+        variant: 'destructive',
+      });
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  /**
+   * Demo login flow for quick product walkthroughs:
+   * 1) attempt sign-in with hardcoded credentials
+   * 2) if user not found, create account
+   * 3) retry sign-in and continue to dashboard
+   */
+  const handleDemoSignIn = async () => {
+    setIsLoading(true);
+    setEmail(DEMO_EMAIL);
+    setPassword(DEMO_PASSWORD);
+    console.info('auth-login-debug: attempting demo sign-in', { email: DEMO_EMAIL });
+
+    try {
+      const firstAttempt = await supabase.auth.signInWithPassword({
+        email: DEMO_EMAIL,
+        password: DEMO_PASSWORD,
+      });
+
+      if (!firstAttempt.error) {
+        console.info('auth-login-debug: demo sign-in succeeded (existing account)');
+        completeLogin();
+        return;
+      }
+
+      console.warn('auth-login-debug: demo account sign-in failed, trying sign-up', {
+        error: firstAttempt.error.message,
+      });
+
+      const signUpAttempt = await supabase.auth.signUp({
+        email: DEMO_EMAIL,
+        password: DEMO_PASSWORD,
+        options: {
+          data: {
+            full_name: 'Demo User',
+          },
+        },
+      });
+
+      if (signUpAttempt.error && !isAlreadyRegisteredError(signUpAttempt.error.message)) {
+        throw signUpAttempt.error;
+      }
+
+      const retryAttempt = await supabase.auth.signInWithPassword({
+        email: DEMO_EMAIL,
+        password: DEMO_PASSWORD,
+      });
+
+      if (retryAttempt.error) {
+        throw retryAttempt.error;
+      }
+
+      console.info('auth-login-debug: demo sign-in succeeded after provisioning');
+      toast({
+        title: 'Demo account ready',
+        description: 'Demo credentials are active and ready for testing.',
+      });
+      completeLogin();
+    } catch (error: unknown) {
+      const authError = error as AuthError;
+      console.error('auth-login-debug: demo sign-in flow failed', {
+        email: DEMO_EMAIL,
+        error: authError.message,
+      });
+      toast({
+        title: 'Demo login failed',
+        description:
+          authError.message ||
+          'Unable to sign in with demo credentials. Check Supabase auth signup settings.',
         variant: 'destructive',
       });
     } finally {
@@ -84,6 +177,19 @@ export default function LoginPage() {
             create a new account
           </Link>
         </p>
+      </div>
+
+      <div className="rounded-md border border-dashed border-primary/40 bg-primary/5 p-3 space-y-2">
+        <p className="text-sm font-medium text-primary">Quick demo credentials</p>
+        <p className="text-xs text-muted-foreground">
+          Email: <span className="font-mono">{DEMO_EMAIL}</span>
+        </p>
+        <p className="text-xs text-muted-foreground">
+          Password: <span className="font-mono">{DEMO_PASSWORD}</span>
+        </p>
+        <Button type="button" variant="outline" className="w-full" onClick={handleDemoSignIn} disabled={isLoading}>
+          {isLoading ? 'Preparing demo account...' : 'Use Demo Account'}
+        </Button>
       </div>
 
       <form onSubmit={handleSubmit} className="space-y-4">
