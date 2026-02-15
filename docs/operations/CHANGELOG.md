@@ -21,6 +21,16 @@
 - Added JSON artifact validation automation docs:
   - references to `npm run ops:validate-json`
 
+## 2026-02-15 — Sprint 19
+- Added automated security rollout gate validator:
+  - `../../scripts/ops/validate_security_rollout_gate.mjs`
+- Added security gate command documentation:
+  - references to `npm run security:gate`
+- Added staging/production security validation sample artifacts:
+  - `../samples/security_baseline_validation_report_sample.json`
+  - `../samples/security_baseline_validation_report_production_sample.json`
+  - `../samples/security_rollout_gate_summary_sample.json`
+
 ## Update Policy
 - Add one changelog entry per sprint that modifies operations-related docs/scripts.
 - Link each entry to artifact paths instead of duplicating content.
