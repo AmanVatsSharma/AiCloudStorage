@@ -24,6 +24,7 @@ import {
   FiX,
   FiUsers,
   FiShield,
+  FiBriefcase,
 } from 'react-icons/fi'
 import Link from 'next/link'
 import { cn } from '@/lib/utils'
@@ -52,6 +53,11 @@ const sidebarItems = [
     title: 'Teams',
     href: '/teams',
     icon: FiUsers,
+  },
+  {
+    title: 'Organizations',
+    href: '/organizations',
+    icon: FiBriefcase,
   },
   {
     title: 'Favorites',

@@ -8,6 +8,7 @@
 - [x] Added initial module docs + flowcharts for files and teams modules
 - [x] Added enterprise security baseline migration (RLS + storage prefix isolation)
 - [x] Added AI summarization API foundation with OpenAI + heuristic fallback
+- [x] Added organization IAM schema foundation and organizations management UI baseline
 - [ ] Validate security baseline migration in staging and production
 
 ## Phase 1: Project Setup and Core Infrastructure
