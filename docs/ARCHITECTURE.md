@@ -95,3 +95,5 @@ flowchart LR
 - `docs/operations/README.md`
 - `docs/API_RELIABILITY_ALERTS.md`
 - `docs/API_HEALTH.md`
+- `docs/API_STORAGE_ANALYTICS.md`
+- `docs/DATABASE_SCHEMA.md`

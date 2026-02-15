@@ -3,6 +3,7 @@
 ## Core Architecture & Product
 - `PROJECT_OVERVIEW.md`
 - `ARCHITECTURE.md`
+- `DATABASE_SCHEMA.md`
 - `ROADMAP.md`
 - `GUIDELINES.md`
 

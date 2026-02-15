@@ -49,6 +49,7 @@
 - [x] Replaced analytics placeholder with live storage analytics dashboard
 - [x] Added storage analytics sample artifact and JSON contract validation coverage
 - [x] Added advanced file search filters and metadata search support
+- [x] Added canonical database schema reference documentation with relationship map
 - [ ] Validate security baseline migration in staging and production
 
 ## Phase 1: Project Setup and Core Infrastructure
@@ -199,7 +200,7 @@
 - [x] Architecture documentation
   - [x] Architecture overview
   - [x] API documentation
-  - [ ] Database schema
+  - [x] Database schema
 - [ ] User documentation
   - [ ] User guides
   - [ ] Feature documentation
