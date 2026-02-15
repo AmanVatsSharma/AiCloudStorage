@@ -37,7 +37,7 @@
   - [x] Avatar management
   - [x] Email verification
 - [ ] Role-based access control
-  - [ ] Role definitions
+  - [x] Role definitions
   - [ ] Permission system
   - [ ] Access control implementation
 

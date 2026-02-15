@@ -12,6 +12,7 @@ export type Json =
   | Json[];
 
 type TeamRole = "owner" | "admin" | "member";
+type OrganizationRole = "owner" | "admin" | "member" | "billing_viewer";
 type ShareAccessLevel = "view" | "edit";
 
 export interface Database {
@@ -325,6 +326,93 @@ export interface Database {
           updated_at?: string;
         };
       };
+      organizations: {
+        Row: {
+          id: string;
+          name: string;
+          slug: string;
+          owner_id: string;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          id?: string;
+          name: string;
+          slug: string;
+          owner_id: string;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: {
+          id?: string;
+          name?: string;
+          slug?: string;
+          owner_id?: string;
+          created_at?: string;
+          updated_at?: string;
+        };
+      };
+      organization_members: {
+        Row: {
+          id: string;
+          organization_id: string;
+          user_id: string;
+          role: OrganizationRole;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          id?: string;
+          organization_id: string;
+          user_id: string;
+          role?: OrganizationRole;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: {
+          id?: string;
+          organization_id?: string;
+          user_id?: string;
+          role?: OrganizationRole;
+          created_at?: string;
+          updated_at?: string;
+        };
+      };
+      organization_invitations: {
+        Row: {
+          id: string;
+          organization_id: string;
+          email: string;
+          role: OrganizationRole;
+          status: "pending" | "accepted" | "revoked";
+          token: string;
+          invited_by: string;
+          created_at: string;
+          expires_at: string;
+        };
+        Insert: {
+          id?: string;
+          organization_id: string;
+          email: string;
+          role?: OrganizationRole;
+          status?: "pending" | "accepted" | "revoked";
+          token: string;
+          invited_by: string;
+          created_at?: string;
+          expires_at?: string;
+        };
+        Update: {
+          id?: string;
+          organization_id?: string;
+          email?: string;
+          role?: OrganizationRole;
+          status?: "pending" | "accepted" | "revoked";
+          token?: string;
+          invited_by?: string;
+          created_at?: string;
+          expires_at?: string;
+        };
+      };
     };
     Views: {
       [_ in never]: never;
@@ -413,6 +501,27 @@ export interface Database {
           p_user_agent?: string | null;
         };
         Returns: string;
+      };
+      create_organization_with_owner: {
+        Args: {
+          p_name: string;
+          p_slug: string;
+          p_owner_id: string;
+        };
+        Returns: string;
+      };
+      get_user_organizations: {
+        Args: {
+          p_user_id: string;
+        };
+        Returns: Array<{
+          id: string;
+          name: string;
+          slug: string;
+          owner_id: string;
+          role: OrganizationRole;
+          created_at: string;
+        }>;
       };
       [key: string]: {
         Args: Record<string, unknown>;

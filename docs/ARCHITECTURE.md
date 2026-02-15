@@ -30,6 +30,10 @@
 - `supabase/migrations/20260215_audit_events.sql`
   - introduces `audit_events` table + insert RPC,
   - establishes initial audit visibility and write constraints.
+- `supabase/migrations/20260215_organization_foundation.sql`
+  - introduces organization, membership, and invitation tables,
+  - adds reusable org ownership/admin/member helper functions,
+  - establishes initial multi-tenant IAM policy baseline.
 
 ---
 
