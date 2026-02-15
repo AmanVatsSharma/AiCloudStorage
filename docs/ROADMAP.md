@@ -7,6 +7,7 @@
 - [x] Removed broken dashboard navigation by adding placeholder route pages
 - [x] Added initial module docs + flowcharts for files and teams modules
 - [x] Added enterprise security baseline migration (RLS + storage prefix isolation)
+- [x] Added AI summarization API foundation with OpenAI + heuristic fallback
 - [ ] Validate security baseline migration in staging and production
 
 ## Phase 1: Project Setup and Core Infrastructure
