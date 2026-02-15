@@ -18,6 +18,7 @@
 - [x] Added incident response and disaster recovery runbooks
 - [x] Added reliability alert threshold baseline from audit event signals
 - [x] Added security baseline validation runbook and SQL verification script
+- [x] Added authenticated reliability alerts API and SIEM integration guide
 - [ ] Validate security baseline migration in staging and production
 
 ## Phase 1: Project Setup and Core Infrastructure
@@ -148,6 +149,7 @@
   - [x] Logging system
   - [x] Alert system
   - [x] Analytics dashboard
+  - [x] External monitoring integration API baseline
 
 ## Testing Checklist
 - [ ] Unit tests

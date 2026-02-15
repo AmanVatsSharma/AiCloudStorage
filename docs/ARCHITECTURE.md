@@ -13,6 +13,9 @@
 - Rich client-side file operations with Supabase-backed persistence.
 - Team collaboration module based on RPC functions.
 - Structured application logs and non-blocking audit event tracking hooks.
+- Reliability insights available through UI and authenticated API export path:
+  - `/reliability`
+  - `/api/reliability/alerts`
 
 ---
 

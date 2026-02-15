@@ -6,8 +6,9 @@ import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { createServerClient } from '@/lib/supabase/server';
 import { logger } from '@/lib/logger';
-import { evaluateSlo, SloStatus, toPercent } from '@/lib/reliability/slo';
-import { generateReliabilityAlerts, ReliabilityAlertSeverity } from '@/lib/reliability/alerts';
+import { SloStatus, toPercent } from '@/lib/reliability/slo';
+import { ReliabilityAlertSeverity } from '@/lib/reliability/alerts';
+import { buildReliabilityReport } from '@/lib/reliability/report';
 import { ReliabilityExportButton } from '@/app/components/reliability/ReliabilityExportButton';
 
 export const metadata: Metadata = {
@@ -132,23 +133,7 @@ export default async function ReliabilityPage() {
   const aiTotalLast24h = aiTotalResult.count ?? 0;
   const aiFailureLast24h = aiFailureResult.count ?? 0;
 
-  const platformSlo = evaluateSlo({
-    name: 'Platform audit success (7d)',
-    successCount: Math.max(0, totalEventsLast7d - failedEventsLast7d),
-    totalCount: totalEventsLast7d,
-    targetRate: 0.99,
-    warningDelta: 0.01,
-  });
-
-  const aiSlo = evaluateSlo({
-    name: 'AI summary success (24h)',
-    successCount: Math.max(0, aiTotalLast24h - aiFailureLast24h),
-    totalCount: aiTotalLast24h,
-    targetRate: 0.95,
-    warningDelta: 0.02,
-  });
-
-  const alerts = generateReliabilityAlerts({
+  const reportBody = buildReliabilityReport({
     totalEventsLast7d,
     failedEventsLast7d,
     failedEventsLast1h,
@@ -156,25 +141,13 @@ export default async function ReliabilityPage() {
     aiFailureLast24h,
   });
 
+  const { platformSlo, aiSlo } = reportBody.indicators;
+  const alerts = reportBody.alerts;
+
   const report = {
     generatedAt: new Date().toISOString(),
     actorId: userId,
-    windows: {
-      platform: '7d',
-      ai: '24h',
-    },
-    counters: {
-      totalEventsLast7d,
-      failedEventsLast7d,
-      failedEventsLast1h,
-      aiTotalLast24h,
-      aiFailureLast24h,
-    },
-    indicators: {
-      platformSlo,
-      aiSlo,
-    },
-    alerts,
+    ...reportBody,
   };
 
   logger.info({

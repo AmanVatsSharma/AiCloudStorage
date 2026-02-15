@@ -9,11 +9,23 @@ Operational reliability visibility for critical platform and AI workflows.
 
 ## Route
 - `/reliability` (`app/(dashboard)/reliability/page.tsx`)
+- `/api/reliability/alerts` (`app/api/reliability/alerts/route.ts`)
 
 ## Indicators
 - Platform SLO (`audit_events` success over 7 days)
 - AI summary SLO (`ai.summary.generate` success over 24 hours)
 - Alert baseline (`audit_events` threshold checks for failure spikes/rates)
+
+## API Integration Modes
+- **Session mode**
+  - Requires authenticated session cookie.
+  - Returns user-scoped reliability report.
+- **Integration mode**
+  - Requires `Authorization: Bearer <RELIABILITY_ALERTS_API_TOKEN>`.
+  - Requires server env: `SUPABASE_SERVICE_ROLE_KEY`.
+  - Supports:
+    - `scope=user&actorId=<uuid>`
+    - `scope=global`
 
 ## Workflow Flowchart
 ```mermaid

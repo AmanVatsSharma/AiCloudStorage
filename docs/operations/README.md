@@ -14,10 +14,15 @@ This module captures operational response procedures for reliability and complia
   - Backup/restore verification workflow
   - Regional outage response drill template
 
+- `SIEM_INTEGRATION.md`
+  - API polling model for reliability alerts.
+  - Routing guidance for warning/critical alert severities.
+
 ## Alerting Inputs
 - Reliability alert baseline uses audit-event thresholds from:
   - `app/(dashboard)/reliability/page.tsx`
   - `lib/reliability/alerts.ts`
+  - `app/api/reliability/alerts/route.ts`
 - Threshold status should be reviewed during incident triage and weekly ops review.
 
 ## Operations Flowchart
