@@ -28,6 +28,9 @@ Related route screens:
   - `add_team_member`
   - `remove_team_member`
 - Owner-based controls are enforced in UI before destructive operations.
+- Permission matrix utilities are centralized in:
+  - `lib/authorization/team-permissions.ts`
+  - covered by unit tests in `lib/authorization/team-permissions.test.ts`
 
 ## Error and Logging Pattern
 - Every high-risk action emits structured logs using `logger` with `traceId`.

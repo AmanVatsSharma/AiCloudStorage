@@ -13,6 +13,12 @@ import { TeamDialog } from '@/app/components/teams/TeamDialog';
 import { InviteMemberDialog } from '@/app/components/teams/InviteMemberDialog';
 import { getUserErrorMessage } from '@/lib/errors';
 import { logger } from '@/lib/logger';
+import {
+  canDeleteTeam,
+  canInviteMembers,
+  canManageTeam,
+  TeamRole,
+} from '@/lib/authorization/team-permissions';
 
 interface Team {
   id: string;
@@ -36,6 +42,7 @@ export default function TeamDetailPage() {
   const [loading, setLoading] = useState(true);
   const [userId, setUserId] = useState<string | null>(null);
   const [traceId] = useState(() => `team-detail_${Date.now()}`);
+  const actorRole: TeamRole = isOwner ? 'owner' : 'member';
 
   const fetchTeam = useCallback(async (currentUserId: string) => {
     setLoading(true);
@@ -121,7 +128,7 @@ export default function TeamDetailPage() {
   }, [fetchTeam, router, supabase, traceId]);
 
   async function handleDeleteTeam() {
-    if (!isOwner || !team) return;
+    if (!canDeleteTeam(actorRole) || !team) return;
     
     if (!confirm(`Are you sure you want to delete the team "${team.name}"? This action cannot be undone and will remove all team members.`)) {
       return;
@@ -211,7 +218,7 @@ export default function TeamDetailPage() {
             )}
           </div>
           
-          {isOwner && (
+          {canManageTeam(actorRole) && (
             <div className="flex items-center gap-2">
               <TeamDialog
                 userId={userId!}
@@ -240,7 +247,7 @@ export default function TeamDetailPage() {
       <Card>
         <CardHeader className="flex flex-row items-center justify-between">
           <CardTitle>Team Members</CardTitle>
-          {isOwner && (
+          {canInviteMembers(actorRole) && (
             <InviteMemberDialog
               teamId={teamId}
               teamName={team.name}

@@ -16,6 +16,14 @@ import {
 } from '@/components/ui/table';
 import { getUserErrorMessage } from '@/lib/errors';
 import { logger } from '@/lib/logger';
+import {
+  assignableRolesFor,
+  canChangeMemberRole,
+  canInviteMembers,
+  canManageTeam,
+  canRemoveMember,
+  TeamRole,
+} from '@/lib/authorization/team-permissions';
 
 interface Member {
   id: string;
@@ -26,6 +34,11 @@ interface Member {
   email?: string;
   full_name?: string;
   avatar_url?: string;
+}
+
+function normalizeRole(role: string): TeamRole {
+  if (role === 'owner' || role === 'admin') return role;
+  return 'member';
 }
 
 interface MemberListProps {
@@ -40,6 +53,11 @@ export function MemberList({ teamId, isOwner, userId }: MemberListProps) {
   const supabase = useMemo(() => createClient(), []);
   const { toast } = useToast();
   const [traceId] = useState(() => `member-list_${Date.now()}`);
+  const actorRole: TeamRole = (() => {
+    if (isOwner) return 'owner';
+    const selfMembership = members.find((member) => member.user_id === userId);
+    return normalizeRole(selfMembership?.role ?? 'member');
+  })();
 
   const fetchMembers = useCallback(async () => {
     setLoading(true);
@@ -144,7 +162,18 @@ export function MemberList({ teamId, isOwner, userId }: MemberListProps) {
   // Note: We'll need to create a new database function for changing member roles
   // But for now, we'll keep this function as is and it will be updated later
   async function handleChangeMemberRole(memberId: string, newRole: string) {
-    if (!isOwner) return;
+    const target = members.find((member) => member.id === memberId);
+    const targetRole = normalizeRole(target?.role ?? 'member');
+    const desiredRole = normalizeRole(newRole);
+
+    if (!canChangeMemberRole(actorRole, targetRole, desiredRole)) {
+      toast({
+        title: 'Permission denied',
+        description: 'You are not allowed to change this member role.',
+        variant: 'destructive',
+      });
+      return;
+    }
 
     try {
       const { error } = await supabase
@@ -200,7 +229,7 @@ export function MemberList({ teamId, isOwner, userId }: MemberListProps) {
         <p className="text-gray-500 mb-6">
           Invite people to collaborate with you
         </p>
-        {isOwner && (
+        {canInviteMembers(actorRole) && (
           <Button>
             <FiUserCheck className="mr-2 h-4 w-4" />
             Invite Members
@@ -220,7 +249,7 @@ export function MemberList({ teamId, isOwner, userId }: MemberListProps) {
             <TableHead>Email</TableHead>
             <TableHead>Role</TableHead>
             <TableHead>Joined</TableHead>
-            {isOwner && <TableHead className="text-right">Actions</TableHead>}
+            {canManageTeam(actorRole) && <TableHead className="text-right">Actions</TableHead>}
           </TableRow>
         </TableHeader>
         <TableBody>
@@ -237,22 +266,24 @@ export function MemberList({ teamId, isOwner, userId }: MemberListProps) {
               <TableCell className="font-medium">{member.full_name || 'Unknown'}</TableCell>
               <TableCell>{member.email || 'No email'}</TableCell>
               <TableCell>
-                {isOwner ? (
+                {canManageTeam(actorRole) && normalizeRole(member.role) !== 'owner' ? (
                   <select 
                     value={member.role}
                     onChange={(e) => handleChangeMemberRole(member.id, e.target.value)}
                     className="p-1 border rounded text-sm"
                   >
-                    <option value="member">Member</option>
-                    <option value="admin">Admin</option>
-                    <option value="owner">Owner</option>
+                    {assignableRolesFor(actorRole).map((role) => (
+                      <option key={role} value={role}>
+                        {role.charAt(0).toUpperCase() + role.slice(1)}
+                      </option>
+                    ))}
                   </select>
                 ) : (
                   <span>{member.role}</span>
                 )}
               </TableCell>
               <TableCell>{new Date(member.created_at).toLocaleDateString()}</TableCell>
-              {isOwner && (
+              {canRemoveMember(actorRole, normalizeRole(member.role), userId, member.user_id) && (
                 <TableCell className="text-right">
                   <Button 
                     variant="ghost" 
