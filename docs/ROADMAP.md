@@ -19,8 +19,8 @@
   - [x] Configure storage buckets
 - [ ] Configure development environment
   - [x] ESLint and project settings
-  - [ ] Jest testing setup
-  - [ ] CI/CD pipeline
+  - [x] Jest testing setup
+  - [x] CI/CD pipeline
 - [ ] NestJS Backend Setup
   - [ ] Initialize NestJS project
   - [ ] Create basic API structure
