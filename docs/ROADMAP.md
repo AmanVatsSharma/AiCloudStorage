@@ -34,6 +34,7 @@
 - [x] Added consolidated operations evidence pack checklist
 - [x] Added evidence artifact naming convention guides for samples and security evidence bundles
 - [x] Added operational API probe automation script and usage docs
+- [x] Added operational probe output sample artifact for integration workflows
 - [ ] Validate security baseline migration in staging and production
 
 ## Phase 1: Project Setup and Core Infrastructure

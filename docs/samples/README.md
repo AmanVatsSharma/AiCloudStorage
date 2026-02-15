@@ -8,6 +8,7 @@ This directory stores example JSON payloads for API integration testing and docu
 Examples:
 - `reliability_alerts_response_sample.json`
 - `health_response_sample.json`
+- `ops_probe_output_sample.json`
 
 ## Usage Guidelines
 - Samples should be sanitized and non-sensitive.

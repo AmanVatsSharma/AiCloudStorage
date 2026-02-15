@@ -36,6 +36,7 @@ This module captures operational response procedures for reliability and complia
 - Use for deployment smoke probes and uptime checks.
 - Probe automation script:
   - `npm run ops:probe -- --base-url https://<app-host> --scope global --reliability-token <token>`
+  - sample output: `docs/samples/ops_probe_output_sample.json`
 
 ## Related API Docs
 - `docs/API_RELIABILITY_ALERTS.md`

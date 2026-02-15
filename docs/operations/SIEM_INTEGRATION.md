@@ -60,6 +60,9 @@ npm run ops:probe -- \
   --reliability-token "${RELIABILITY_ALERTS_API_TOKEN}"
 ```
 
+Probe output sample:
+- `docs/samples/ops_probe_output_sample.json`
+
 ## Recommended alert routing
 - `platform_failure_rate_critical` -> Incident Commander + On-call backend.
 - `failure_spike_critical` -> Incident Commander + Product engineering squad.

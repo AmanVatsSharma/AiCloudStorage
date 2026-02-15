@@ -12,6 +12,7 @@
 - `samples/README.md`
 - `samples/reliability_alerts_response_sample.json`
 - `samples/health_response_sample.json`
+- `samples/ops_probe_output_sample.json`
 
 ### Quickstart API Examples
 ```bash
