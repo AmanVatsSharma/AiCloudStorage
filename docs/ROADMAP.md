@@ -15,6 +15,7 @@
 - [x] Added AI tools UI baseline (summary workbench)
 - [x] Added AI summarize usage/cost telemetry baseline
 - [x] Added AI summarize endpoint rate-limit baseline with retry telemetry
+- [x] Replaced help placeholder with operational help center and command presets
 - [x] Replaced shared/favorites/recent placeholders with live account-scoped views
 - [x] Added reliability dashboard with SLO indicator tracking and export
 - [x] Added incident response and disaster recovery runbooks
