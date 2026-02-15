@@ -1,0 +1,54 @@
+{
+  "generatedAt": "2026-02-15T12:00:00.000Z",
+  "authorizationMode": "integration",
+  "scope": "global",
+  "actorId": null,
+  "windows": {
+    "platform": "7d",
+    "ai": "24h",
+    "failureSpike": "1h"
+  },
+  "counters": {
+    "totalEventsLast7d": 420,
+    "failedEventsLast7d": 11,
+    "failedEventsLast1h": 1,
+    "aiTotalLast24h": 55,
+    "aiFailureLast24h": 4
+  },
+  "indicators": {
+    "platformSlo": {
+      "name": "Platform audit success (7d)",
+      "successCount": 409,
+      "totalCount": 420,
+      "successRate": 0.9738095238,
+      "targetRate": 0.99,
+      "status": "breach",
+      "shortfall": 0.0161904762
+    },
+    "aiSlo": {
+      "name": "AI summary success (24h)",
+      "successCount": 51,
+      "totalCount": 55,
+      "successRate": 0.9272727273,
+      "targetRate": 0.95,
+      "status": "breach",
+      "shortfall": 0.0227272727
+    }
+  },
+  "alerts": [
+    {
+      "code": "platform_failure_rate_warning",
+      "severity": "warning",
+      "title": "Platform failure rate is above warning threshold",
+      "description": "7-day platform failure rate is 2.62% (11/420).",
+      "recommendedAction": "Review failure clusters and schedule remediation before rate reaches critical threshold."
+    },
+    {
+      "code": "ai_failure_rate_warning",
+      "severity": "warning",
+      "title": "AI summarization failure rate warning",
+      "description": "AI summary failure rate is 7.27% (4/55) over 24 hours.",
+      "recommendedAction": "Review AI provider fallback frequency and recent model/API response anomalies."
+    }
+  ]
+}

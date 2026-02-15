@@ -78,6 +78,9 @@ Provide machine-consumable reliability status for dashboarding, SIEM ingestion, 
 }
 ```
 
+Sample response artifact:
+- `docs/samples/reliability_alerts_response_sample.json`
+
 ## Error Responses
 - `400`: missing `actorId` for integration `scope=user`
 - `401`: no authenticated session in session mode

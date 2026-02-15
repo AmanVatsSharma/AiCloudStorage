@@ -24,6 +24,9 @@ Integrate reliability alerts and security telemetry into external monitoring sys
    - `severity=warning` => backlog triage ticket
 4. Persist full JSON payload for audit history.
 
+Reference payload artifact:
+- `docs/samples/reliability_alerts_response_sample.json`
+
 ## Health Probe Integration
 - Endpoint: `GET /api/health`
 - Purpose: deployment and uptime readiness checks.
