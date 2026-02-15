@@ -19,6 +19,7 @@ This module captures operational response procedures for reliability and complia
   - Routing guidance for warning/critical alert severities.
 - `RELEASE_VALIDATION_TEMPLATE.md`
   - release-ticket checklist for security, reliability, and operational evidence capture.
+  - sample ticket: `docs/samples/release_validation_ticket_sample.md`
 - `EVIDENCE_PACK_CHECKLIST.md`
   - consolidated artifact checklist for security, readiness, and release-governance evidence.
 

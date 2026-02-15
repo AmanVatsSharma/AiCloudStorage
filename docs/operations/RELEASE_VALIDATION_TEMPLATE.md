@@ -2,6 +2,9 @@
 
 Use this template for staging/production rollout tickets to ensure operational, security, and reliability evidence is consistently captured.
 
+Reference sample:
+- `docs/samples/release_validation_ticket_sample.md`
+
 ---
 
 ## Release Metadata
