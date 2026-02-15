@@ -54,6 +54,7 @@
 - [x] Added file overwrite version archival with restore/download lifecycle support
 - [x] Validate security baseline migration in staging and production
 - [x] Added storage bucket management API and settings UI with governance controls
+- [x] Added Dockerfile-based deployment baseline and deployment runbook
 
 ## Phase 1: Project Setup and Core Infrastructure
 - [x] Initialize project structure
@@ -176,7 +177,7 @@
   - [ ] Performance monitoring
   - [ ] Load testing
 - [ ] Infrastructure
-  - [ ] Docker setup
+  - [x] Docker setup
   - [ ] Deployment infrastructure
   - [ ] Auto-scaling
 - [ ] Monitoring

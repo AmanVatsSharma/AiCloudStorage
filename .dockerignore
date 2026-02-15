@@ -1,0 +1,12 @@
+.git
+.github
+.cursor
+node_modules
+.next
+npm-debug.log
+coverage
+dist
+*.local
+.env
+.env.*
+artifacts
