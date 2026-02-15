@@ -30,7 +30,7 @@ export default async function FilesPage() {
   const { data: { session } } = await supabase.auth.getSession();
 
   if (!session) {
-    redirect('/auth/login');
+    redirect('/login');
   }
 
   return (
