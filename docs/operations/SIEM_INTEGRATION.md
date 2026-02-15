@@ -52,6 +52,14 @@ curl -sS \
   "https://<app-host>/api/reliability/alerts?scope=global"
 ```
 
+## Probe Automation Shortcut
+```bash
+npm run ops:probe -- \
+  --base-url "https://<app-host>" \
+  --scope global \
+  --reliability-token "${RELIABILITY_ALERTS_API_TOKEN}"
+```
+
 ## Recommended alert routing
 - `platform_failure_rate_critical` -> Incident Commander + On-call backend.
 - `failure_spike_critical` -> Incident Commander + Product engineering squad.

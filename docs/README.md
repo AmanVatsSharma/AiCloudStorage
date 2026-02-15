@@ -42,6 +42,12 @@ npm run security:evidence -- \
   --validator platform.engineer@company.com \
   --approver security.lead@company.com \
   --ticket REL-1234
+
+# Probe health + reliability APIs
+npm run ops:probe -- \
+  --base-url "https://<app-host>" \
+  --scope global \
+  --reliability-token "${RELIABILITY_ALERTS_API_TOKEN}"
 ```
 
 ## AI Services

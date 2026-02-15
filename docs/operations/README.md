@@ -34,6 +34,8 @@ This module captures operational response procedures for reliability and complia
   - `GET /api/health`
   - reference: `docs/API_HEALTH.md`
 - Use for deployment smoke probes and uptime checks.
+- Probe automation script:
+  - `npm run ops:probe -- --base-url https://<app-host> --scope global --reliability-token <token>`
 
 ## Related API Docs
 - `docs/API_RELIABILITY_ALERTS.md`
