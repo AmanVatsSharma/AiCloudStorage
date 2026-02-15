@@ -96,7 +96,7 @@
   - [x] Member management
   - [ ] Team permissions
 - [ ] Audit system
-  - [ ] Activity logging
+  - [x] Activity logging
   - [ ] Audit reports
   - [ ] Compliance tools
 - [ ] Advanced security

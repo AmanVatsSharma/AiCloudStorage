@@ -23,6 +23,7 @@ import {
   FiMenu,
   FiX,
   FiUsers,
+  FiShield,
 } from 'react-icons/fi'
 import Link from 'next/link'
 import { cn } from '@/lib/utils'
@@ -66,6 +67,11 @@ const sidebarItems = [
     title: 'Analytics',
     href: '/analytics',
     icon: FiPieChart,
+  },
+  {
+    title: 'Audit',
+    href: '/audit',
+    icon: FiShield,
   },
   {
     title: 'Profile',

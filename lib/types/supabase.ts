@@ -166,6 +166,47 @@ export interface Database {
           created_at?: string;
         };
       };
+      audit_events: {
+        Row: {
+          id: string;
+          actor_id: string;
+          team_id: string | null;
+          action: string;
+          resource_type: string | null;
+          resource_id: string | null;
+          status: string;
+          details: Json;
+          ip_address: string | null;
+          user_agent: string | null;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          actor_id: string;
+          team_id?: string | null;
+          action: string;
+          resource_type?: string | null;
+          resource_id?: string | null;
+          status?: string;
+          details?: Json;
+          ip_address?: string | null;
+          user_agent?: string | null;
+          created_at?: string;
+        };
+        Update: {
+          id?: string;
+          actor_id?: string;
+          team_id?: string | null;
+          action?: string;
+          resource_type?: string | null;
+          resource_id?: string | null;
+          status?: string;
+          details?: Json;
+          ip_address?: string | null;
+          user_agent?: string | null;
+          created_at?: string;
+        };
+      };
       file_versions: {
         Row: {
           id: string;
@@ -359,6 +400,19 @@ export interface Database {
           p_user_id: string;
         };
         Returns: boolean;
+      };
+      log_audit_event: {
+        Args: {
+          p_action: string;
+          p_resource_type?: string | null;
+          p_resource_id?: string | null;
+          p_status?: string;
+          p_details?: Json;
+          p_team_id?: string | null;
+          p_ip_address?: string | null;
+          p_user_agent?: string | null;
+        };
+        Returns: string;
       };
       [key: string]: {
         Args: Record<string, unknown>;
