@@ -6,6 +6,7 @@ import { createClient } from '@/lib/supabase/client'
 import { useToast } from '@/components/ui/use-toast'
 import { getUserErrorMessage } from '@/lib/errors'
 import { logger } from '@/lib/logger'
+import Image from 'next/image'
 
 type Profile = {
   full_name: string | null
@@ -153,9 +154,11 @@ export function ProfileForm({ user }: { user: User }) {
           Profile Picture
         </label>
         <div className="mt-1 flex items-center space-x-4">
-          <img
-            src={profile.avatar_url || '/default-avatar.png'}
+          <Image
+            src={profile.avatar_url || '/placeholder-user.jpg'}
             alt="Profile"
+            width={48}
+            height={48}
             className="h-12 w-12 rounded-full object-cover"
           />
           <input

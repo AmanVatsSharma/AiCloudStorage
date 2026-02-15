@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect, useMemo, useCallback } from 'react';
 import { createClient } from '@/lib/supabase/client';
 import { useRouter } from 'next/navigation';
 import { useToast } from '@/components/ui/use-toast';
@@ -33,11 +33,7 @@ export function TeamList({ userId, filter }: TeamListProps) {
   const { toast } = useToast();
   const [traceId] = useState(() => `team-list_${Date.now()}`);
 
-  useEffect(() => {
-    fetchTeams();
-  }, [userId, filter]);
-
-  async function fetchTeams() {
+  const fetchTeams = useCallback(async () => {
     setLoading(true);
     try {
       // Use the new database function to get teams
@@ -91,7 +87,11 @@ export function TeamList({ userId, filter }: TeamListProps) {
     } finally {
       setLoading(false);
     }
-  }
+  }, [filter, supabase, toast, traceId, userId]);
+
+  useEffect(() => {
+    void fetchTeams();
+  }, [fetchTeams]);
 
   async function handleDeleteTeam(teamId: string, teamName: string) {
     if (!confirm(`Are you sure you want to delete the team "${teamName}"?`)) {

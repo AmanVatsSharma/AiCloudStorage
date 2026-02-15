@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useMemo, useState, useEffect } from 'react';
+import React, { useCallback, useMemo, useState, useEffect } from 'react';
 import { createClient } from '@/lib/supabase/client';
 import { FiClock, FiDownload, FiRotateCcw, FiTrash2 } from 'react-icons/fi';
 import { Button } from '@/components/ui/button';
@@ -41,13 +41,7 @@ export function FileVersionHistory({ file, isOpen, onClose }: FileVersionHistory
   const { toast } = useToast();
   const [traceId] = useState(() => `file-version-history_${Date.now()}`);
 
-  useEffect(() => {
-    if (isOpen) {
-      fetchVersions();
-    }
-  }, [isOpen, file.id]);
-
-  const fetchVersions = async () => {
+  const fetchVersions = useCallback(async () => {
     setIsLoading(true);
     try {
       const { data, error } = await supabase
@@ -76,7 +70,13 @@ export function FileVersionHistory({ file, isOpen, onClose }: FileVersionHistory
     } finally {
       setIsLoading(false);
     }
-  };
+  }, [file.id, supabase, toast, traceId]);
+
+  useEffect(() => {
+    if (isOpen) {
+      void fetchVersions();
+    }
+  }, [fetchVersions, isOpen]);
 
   const handleDownloadVersion = async (version: Version) => {
     try {

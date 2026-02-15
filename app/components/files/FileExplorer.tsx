@@ -159,7 +159,7 @@ export function FileExplorer() {
   const [isShareDialogOpen, setIsShareDialogOpen] = useState(false);
   const [fileToShare, setFileToShare] = useState<FileItem | null>(null);
   const [moveOperation, setMoveOperation] = useState<'move' | 'copy'>('move');
-  const supabase = createClient();
+  const supabase = useMemo(() => createClient(), []);
   const { toast } = useToast();
   const [searchQuery, setSearchQuery] = useState('');
   const [searchResults, setSearchResults] = useState<FileItem[]>([]);
@@ -197,8 +197,8 @@ export function FileExplorer() {
       }
     };
     
-    getUserId();
-  }, [supabase, toast]);
+    void getUserId();
+  }, [supabase, toast, traceId]);
 
   // Drag and drop functionality
   const onDrop = useCallback(async (acceptedFiles: File[]) => {
@@ -302,7 +302,9 @@ export function FileExplorer() {
     } finally {
       setIsUploading(false);
     }
-  }, [currentFolder, supabase, toast, userId]);
+  // fetchFiles is intentionally omitted to avoid unstable callback loops.
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [currentFolder, supabase, toast, traceId, userId]);
   
   const { getRootProps, getInputProps, isDragActive } = useDropzone({ 
     onDrop,

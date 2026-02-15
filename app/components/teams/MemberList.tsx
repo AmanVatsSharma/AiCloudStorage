@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect, useMemo, useCallback } from 'react';
 import { createClient } from '@/lib/supabase/client';
 import { FiUser, FiUserX, FiUserCheck } from 'react-icons/fi';
 import { Button } from '@/components/ui/button';
@@ -41,11 +41,7 @@ export function MemberList({ teamId, isOwner, userId }: MemberListProps) {
   const { toast } = useToast();
   const [traceId] = useState(() => `member-list_${Date.now()}`);
 
-  useEffect(() => {
-    fetchMembers();
-  }, [teamId]);
-
-  async function fetchMembers() {
+  const fetchMembers = useCallback(async () => {
     setLoading(true);
     try {
       // Use the database function to get team members
@@ -94,7 +90,11 @@ export function MemberList({ teamId, isOwner, userId }: MemberListProps) {
     } finally {
       setLoading(false);
     }
-  }
+  }, [supabase, teamId, toast, traceId, userId]);
+
+  useEffect(() => {
+    void fetchMembers();
+  }, [fetchMembers]);
 
   async function handleRemoveMember(memberId: string) {
     if (!isOwner) return;

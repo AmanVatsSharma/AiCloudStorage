@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useMemo, useState, useEffect } from 'react';
+import React, { useCallback, useMemo, useState, useEffect } from 'react';
 import { createClient } from '@/lib/supabase/client';
 import { useToast } from '@/components/ui/use-toast';
 import { 
@@ -56,13 +56,7 @@ export function FileTags({ fileId, isOpen, onClose }: FileTagsProps) {
     '#EC4899', // pink
   ];
 
-  useEffect(() => {
-    if (isOpen) {
-      fetchData();
-    }
-  }, [isOpen, fileId]);
-
-  const fetchData = async () => {
+  const fetchData = useCallback(async () => {
     setLoading(true);
     try {
       // Fetch all tags
@@ -100,7 +94,13 @@ export function FileTags({ fileId, isOpen, onClose }: FileTagsProps) {
     } finally {
       setLoading(false);
     }
-  };
+  }, [fileId, supabase, toast, traceId]);
+
+  useEffect(() => {
+    if (isOpen) {
+      void fetchData();
+    }
+  }, [fetchData, isOpen]);
 
   const createTag = async () => {
     if (!newTagName.trim()) return;
