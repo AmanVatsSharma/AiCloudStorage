@@ -51,3 +51,4 @@ npm run security:evidence -- \
 - `operations/DISASTER_RECOVERY_RUNBOOK.md`
 - `operations/SIEM_INTEGRATION.md`
 - `operations/RELEASE_VALIDATION_TEMPLATE.md`
+- `operations/EVIDENCE_PACK_CHECKLIST.md`
