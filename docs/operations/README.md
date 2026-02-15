@@ -31,6 +31,10 @@ This module captures operational response procedures for reliability and complia
   - reference: `docs/API_HEALTH.md`
 - Use for deployment smoke probes and uptime checks.
 
+## Related API Docs
+- `docs/API_RELIABILITY_ALERTS.md`
+- `docs/API_HEALTH.md`
+
 ## Operations Flowchart
 ```mermaid
 flowchart TD

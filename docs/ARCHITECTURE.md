@@ -93,3 +93,5 @@ flowchart LR
 - `docs/operations/INCIDENT_RESPONSE_RUNBOOK.md`
 - `docs/operations/DISASTER_RECOVERY_RUNBOOK.md`
 - `docs/operations/README.md`
+- `docs/API_RELIABILITY_ALERTS.md`
+- `docs/API_HEALTH.md`
