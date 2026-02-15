@@ -1,6 +1,6 @@
 'use client';
 
-import { FormEvent, useMemo, useState } from 'react';
+import { FormEvent, useEffect, useMemo, useState } from 'react';
 import { createClient } from '@/lib/supabase/client';
 import { useToast } from '@/components/ui/use-toast';
 import {
@@ -20,13 +20,17 @@ import { logger } from '@/lib/logger';
 import { getUserErrorMessage } from '@/lib/errors';
 import { trackAuditEvent } from '@/lib/audit';
 import { FiUserPlus } from 'react-icons/fi';
-
-type OrganizationRole = 'owner' | 'admin' | 'member' | 'billing_viewer';
+import {
+  canInviteOrganizationRole,
+  getInvitableOrganizationRoles,
+  OrganizationRole,
+} from '@/lib/authorization/organization-permissions';
 
 interface OrganizationInviteDialogProps {
   organizationId: string;
   organizationName: string;
   actorUserId: string;
+  actorRole: OrganizationRole;
   onSuccess?: () => void;
 }
 
@@ -37,6 +41,7 @@ export function OrganizationInviteDialog({
   organizationId,
   organizationName,
   actorUserId,
+  actorRole,
   onSuccess,
 }: OrganizationInviteDialogProps) {
   const supabase = useMemo(() => createClient(), []);
@@ -46,11 +51,50 @@ export function OrganizationInviteDialog({
   const [email, setEmail] = useState('');
   const [role, setRole] = useState<OrganizationRole>('member');
   const [loading, setLoading] = useState(false);
+  const allowedRoles = useMemo(() => getInvitableOrganizationRoles(actorRole), [actorRole]);
+
+  const roleOptions = useMemo(
+    () =>
+      allowedRoles.map((value) => ({
+        value,
+        label: value === 'billing_viewer' ? 'Billing Viewer' : value.charAt(0).toUpperCase() + value.slice(1),
+      })),
+    [allowedRoles]
+  );
+
+  useEffect(() => {
+    if (allowedRoles.length === 0) {
+      return;
+    }
+
+    if (!allowedRoles.includes(role)) {
+      setRole(allowedRoles[0]);
+    }
+  }, [allowedRoles, role]);
 
   const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     const normalizedEmail = email.trim().toLowerCase();
     if (!normalizedEmail) return;
+
+    if (!canInviteOrganizationRole(actorRole, role)) {
+      logger.warn({
+        traceId,
+        scope: 'organization-invite-dialog',
+        message: 'Invite blocked by organization permission matrix.',
+        data: {
+          actorRole,
+          targetRole: role,
+          organizationId,
+        },
+      });
+      toast({
+        title: 'Permission denied',
+        description: 'Your organization role does not allow inviting this member role.',
+        variant: 'destructive',
+      });
+      return;
+    }
 
     setLoading(true);
     try {
@@ -154,9 +198,11 @@ export function OrganizationInviteDialog({
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="admin">Admin</SelectItem>
-                <SelectItem value="member">Member</SelectItem>
-                <SelectItem value="billing_viewer">Billing Viewer</SelectItem>
+                {roleOptions.map((roleOption) => (
+                  <SelectItem key={roleOption.value} value={roleOption.value}>
+                    {roleOption.label}
+                  </SelectItem>
+                ))}
               </SelectContent>
             </Select>
           </div>

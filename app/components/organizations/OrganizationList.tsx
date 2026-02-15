@@ -9,13 +9,17 @@ import { useToast } from '@/components/ui/use-toast';
 import { getUserErrorMessage } from '@/lib/errors';
 import { FiBriefcase } from 'react-icons/fi';
 import { OrganizationInviteDialog } from '@/app/components/organizations/OrganizationInviteDialog';
+import {
+  canInviteOrganizationMembers,
+  OrganizationRole,
+} from '@/lib/authorization/organization-permissions';
 
 type OrganizationMembership = {
   id: string;
   name: string;
   slug: string;
   owner_id: string;
-  role: 'owner' | 'admin' | 'member' | 'billing_viewer';
+  role: OrganizationRole;
   created_at: string;
 };
 
@@ -104,12 +108,13 @@ export function OrganizationList({ userId, refreshKey }: OrganizationListProps) 
               <span className="truncate">{organization.name}</span>
               <Badge variant="secondary">{organization.role}</Badge>
             </CardTitle>
-            {(organization.role === 'owner' || organization.role === 'admin') && (
+            {canInviteOrganizationMembers(organization.role) && (
               <div className="flex justify-end">
                 <OrganizationInviteDialog
                   organizationId={organization.id}
                   organizationName={organization.name}
                   actorUserId={userId}
+                  actorRole={organization.role}
                   onSuccess={() => void fetchOrganizations()}
                 />
               </div>

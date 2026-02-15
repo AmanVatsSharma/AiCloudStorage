@@ -16,6 +16,7 @@ This module provides enterprise tenancy entry points:
 - `OrganizationInviteDialog.tsx`
   - creates invitations in `organization_invitations`.
   - captures role + email + token and emits audit events.
+  - enforces centralized permission matrix from `lib/authorization/organization-permissions.ts`.
 
 Route:
 - `/organizations` (`app/(dashboard)/organizations/page.tsx`)
