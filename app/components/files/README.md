@@ -15,7 +15,7 @@ This module powers file and folder management inside the dashboard:
 - `FilePreview.tsx` — signed URL preview/download rendering.
 - `FileTags.tsx` — tag management dialog.
 - `FileVersionHistory.tsx` — historical version operations.
-- `FileSearch.tsx` — file/folder search input interactions.
+- `FileSearch.tsx` — basic + advanced search UI (scope, category, size, date, metadata text).
 - `TrashManager.tsx` — trash listing, restore, and permanent delete workflow.
 
 Associated dashboard views:
@@ -29,6 +29,9 @@ Associated dashboard views:
   - `<userId>/<folderId-or-root>/<fileName>`
 - Folder records may use `path = null`; file records must carry storage path.
 - Active explorer/search queries only include `is_trashed = false`.
+- Advanced search applies a two-stage pipeline:
+  - indexed filters in Supabase query (name, scope, updated date range),
+  - deterministic client-side refinement (`lib/files/search.ts`) for category, metadata text, and size ranges.
 - Trash page queries only include `is_trashed = true`.
 - Soft delete now stamps `trashed_at` to support retention-window enforcement.
 
@@ -54,7 +57,8 @@ flowchart TD
   E -->|Upload| F[Upload to storage bucket]
   F --> G[Insert file record in DB]
   E -->|Create folder| H[Insert folder record in DB]
-  E -->|Search| I[Query files by name + user_id]
+  E -->|Search| I[Run indexed DB search by name and scope]
+  I --> I2[Apply advanced filters: category/size/metadata/date]
   E -->|Move/Copy| J[Open FileMoveDialog]
   E -->|Share| K[Open FileShareDialog]
   E -->|Preview| L[Open FilePreview]
@@ -65,7 +69,7 @@ flowchart TD
   U --> V[Trash manager enforces retention before permanent delete]
   G --> D
   H --> D
-  I --> O[Render search results]
+  I2 --> O[Render search results]
   J --> D
   K --> D
 ```

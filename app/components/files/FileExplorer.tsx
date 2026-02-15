@@ -16,6 +16,12 @@ import { getUserErrorMessage } from '@/lib/errors';
 import { logger } from '@/lib/logger';
 import { trackAuditEvent } from '@/lib/audit';
 import {
+  applyFileSearchFilters,
+  FileSearchRequestInput,
+  hasActiveSearchCriteria,
+  normalizeFileSearchRequest,
+} from '@/lib/files/search';
+import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
@@ -34,6 +40,7 @@ type FileItem = {
   parent_id: string | null;
   is_folder: boolean;
   is_trashed?: boolean;
+  metadata?: unknown;
 };
 
 // This component will handle generating and displaying thumbnails
@@ -164,7 +171,15 @@ export function FileExplorer() {
   const [moveOperation, setMoveOperation] = useState<'move' | 'copy'>('move');
   const supabase = useMemo(() => createClient(), []);
   const { toast } = useToast();
-  const [searchQuery, setSearchQuery] = useState('');
+  const [searchRequest, setSearchRequest] = useState(() =>
+    normalizeFileSearchRequest({
+      query: '',
+      filters: {
+        itemScope: 'all',
+        category: 'all',
+      },
+    })
+  );
   const [searchResults, setSearchResults] = useState<FileItem[]>([]);
   const [isSearching, setIsSearching] = useState(false);
   const [isVersionHistoryOpen, setIsVersionHistoryOpen] = useState(false);
@@ -647,10 +662,11 @@ export function FileExplorer() {
     return selectedFiles.some(f => f.id === file.id);
   };
 
-  const handleSearch = async (query: string) => {
-    setSearchQuery(query);
+  const handleSearch = async (input: FileSearchRequestInput) => {
+    const normalizedRequest = normalizeFileSearchRequest(input);
+    setSearchRequest(normalizedRequest);
     
-    if (!query.trim()) {
+    if (!hasActiveSearchCriteria(normalizedRequest)) {
       setIsSearching(false);
       setSearchResults([]);
       return;
@@ -669,18 +685,36 @@ export function FileExplorer() {
     setIsSearching(true);
     
     try {
-      const { data, error } = await supabase
+      let queryBuilder = supabase
         .from('files')
         .select('*')
         .eq('user_id', userId)
-        .eq('is_trashed', false)
-        .ilike('name', `%${query}%`)
+        .eq('is_trashed', false);
+
+      // Indexed filters are pushed to the database query for efficiency.
+      if (normalizedRequest.query) {
+        queryBuilder = queryBuilder.ilike('name', `%${normalizedRequest.query}%`);
+      }
+      if (normalizedRequest.filters.itemScope === 'files') {
+        queryBuilder = queryBuilder.eq('is_folder', false);
+      } else if (normalizedRequest.filters.itemScope === 'folders') {
+        queryBuilder = queryBuilder.eq('is_folder', true);
+      }
+      if (normalizedRequest.filters.updatedAfter) {
+        queryBuilder = queryBuilder.gte('updated_at', `${normalizedRequest.filters.updatedAfter}T00:00:00.000Z`);
+      }
+      if (normalizedRequest.filters.updatedBefore) {
+        queryBuilder = queryBuilder.lte('updated_at', `${normalizedRequest.filters.updatedBefore}T23:59:59.999Z`);
+      }
+
+      const { data, error } = await queryBuilder
         .order('is_folder', { ascending: false })
         .order('name');
       
       if (error) throw error;
-      
-      setSearchResults(data || []);
+
+      const filteredResults = applyFileSearchFilters((data as FileItem[] | null) || [], normalizedRequest);
+      setSearchResults(filteredResults);
     } catch (error: unknown) {
       const pgError = error as PostgrestError;
       logger.error({
@@ -688,7 +722,8 @@ export function FileExplorer() {
         scope: "file-explorer-search",
         message: "File search failed.",
         data: {
-          query,
+          query: normalizedRequest.query,
+          filters: normalizedRequest.filters,
           error: pgError.message,
         },
       });
@@ -823,14 +858,26 @@ export function FileExplorer() {
 
         {/* File grid */}
         <div className="flex-1 p-4 overflow-auto">
-          {searchQuery ? (
+          {hasActiveSearchCriteria(searchRequest) ? (
             // Search results
             <>
               <div className="mb-4">
-                <h3 className="text-lg font-medium">Search results for &quot;{searchQuery}&quot;</h3>
+                <h3 className="text-lg font-medium">
+                  {searchRequest.query
+                    ? `Search results for "${searchRequest.query}"`
+                    : 'Search results for advanced filters'}
+                </h3>
                 <button
                   onClick={() => {
-                    setSearchQuery('');
+                    setSearchRequest(
+                      normalizeFileSearchRequest({
+                        query: '',
+                        filters: {
+                          itemScope: 'all',
+                          category: 'all',
+                        },
+                      })
+                    );
                     setSearchResults([]);
                   }}
                   className="text-sm text-primary hover:underline"
@@ -846,7 +893,7 @@ export function FileExplorer() {
               ) : searchResults.length === 0 ? (
                 <div className="flex flex-col items-center justify-center h-64 text-gray-500">
                   <FiSearch className="h-12 w-12 mb-2" />
-                  <p>No files found matching &quot;{searchQuery}&quot;</p>
+                  <p>No files found matching the selected criteria.</p>
                 </div>
               ) : (
                 <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">

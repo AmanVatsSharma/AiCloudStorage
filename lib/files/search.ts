@@ -176,10 +176,10 @@ function matchesDateRange(itemDate: string, startDate: string | null, endDate: s
 /**
  * Applies deterministic advanced search criteria against file records.
  */
-export function applyFileSearchFilters(
-  items: SearchableFileRecord[],
+export function applyFileSearchFilters<T extends SearchableFileRecord>(
+  items: T[],
   request: NormalizedFileSearchRequest
-): SearchableFileRecord[] {
+): T[] {
   const { query, filters } = request;
   const normalizedQuery = query.toLowerCase();
 

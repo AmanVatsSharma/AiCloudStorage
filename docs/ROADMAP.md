@@ -48,6 +48,7 @@
 - [x] Added release validation ticket generator automation script
 - [x] Replaced analytics placeholder with live storage analytics dashboard
 - [x] Added storage analytics sample artifact and JSON contract validation coverage
+- [x] Added advanced file search filters and metadata search support
 - [ ] Validate security baseline migration in staging and production
 
 ## Phase 1: Project Setup and Core Infrastructure
@@ -95,8 +96,8 @@
   - [ ] Bucket management UI
 - [ ] Search functionality
   - [x] Basic search
-  - [ ] Advanced filters
-  - [ ] Metadata search
+  - [x] Advanced filters
+  - [x] Metadata search
 
 ## Phase 4: AI Integration with NestJS
 - [ ] Setup NestJS AI processing services
