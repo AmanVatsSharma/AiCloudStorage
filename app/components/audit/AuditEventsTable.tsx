@@ -17,6 +17,7 @@ import {
   TableRow,
 } from '@/components/ui/table';
 import { Button } from '@/components/ui/button';
+import { toCsv } from '@/lib/export/csv';
 
 type AuditEvent = {
   id: string;
@@ -109,6 +110,50 @@ export function AuditEventsTable() {
     return 'secondary';
   };
 
+  const handleExport = () => {
+    if (events.length === 0) {
+      toast({
+        title: 'No data to export',
+        description: 'Apply different filters or refresh audit events.',
+      });
+      return;
+    }
+
+    const csv = toCsv(
+      events.map((event) => ({
+        id: event.id,
+        created_at: event.created_at,
+        actor_id: event.actor_id,
+        team_id: event.team_id,
+        action: event.action,
+        status: event.status,
+        resource_type: event.resource_type,
+        resource_id: event.resource_id,
+        details: event.details ? JSON.stringify(event.details) : '',
+      }))
+    );
+
+    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    const now = new Date().toISOString().replace(/[:.]/g, '-');
+    link.href = url;
+    link.download = `audit-events-${now}.csv`;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
+
+    logger.info({
+      traceId,
+      scope: "audit-events-table",
+      message: "Exported audit events CSV.",
+      data: {
+        count: events.length,
+      },
+    });
+  };
+
   return (
     <Card>
       <CardHeader className="space-y-4">
@@ -124,9 +169,14 @@ export function AuditEventsTable() {
             value={statusFilter}
             onChange={(event) => setStatusFilter(event.target.value)}
           />
-          <Button variant="outline" onClick={() => void fetchAuditEvents()} disabled={loading}>
-            {loading ? 'Refreshing...' : 'Refresh'}
-          </Button>
+          <div className="flex items-center gap-2">
+            <Button variant="outline" onClick={() => void fetchAuditEvents()} disabled={loading}>
+              {loading ? 'Refreshing...' : 'Refresh'}
+            </Button>
+            <Button variant="secondary" onClick={handleExport} disabled={loading}>
+              Export CSV
+            </Button>
+          </div>
         </div>
       </CardHeader>
       <CardContent>

@@ -99,7 +99,7 @@
   - [ ] Team permissions
 - [ ] Audit system
   - [x] Activity logging
-  - [ ] Audit reports
+  - [x] Audit reports
   - [ ] Compliance tools
 - [ ] Advanced security
   - [x] 2FA setup interface

@@ -37,6 +37,10 @@ Core columns:
 - `team.member.add`
 - `file.share.create`
 
+## Audit UI Capabilities (Current)
+- Audit table with action/status filtering.
+- CSV export of currently visible audit rows from the dashboard UI.
+
 ## Audit Flowchart
 ```mermaid
 flowchart TD
