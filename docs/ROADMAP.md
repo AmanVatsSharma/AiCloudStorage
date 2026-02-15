@@ -15,6 +15,7 @@
 - [x] Added AI tools UI baseline (summary workbench)
 - [x] Added reliability dashboard with SLO indicator tracking and export
 - [x] Added incident response and disaster recovery runbooks
+- [x] Added reliability alert threshold baseline from audit event signals
 - [ ] Validate security baseline migration in staging and production
 
 ## Phase 1: Project Setup and Core Infrastructure
@@ -143,7 +144,7 @@
   - [ ] Auto-scaling
 - [ ] Monitoring
   - [x] Logging system
-  - [ ] Alert system
+  - [x] Alert system
   - [x] Analytics dashboard
 
 ## Testing Checklist

@@ -7,6 +7,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { createServerClient } from '@/lib/supabase/server';
 import { logger } from '@/lib/logger';
 import { evaluateSlo, SloStatus, toPercent } from '@/lib/reliability/slo';
+import { generateReliabilityAlerts, ReliabilityAlertSeverity } from '@/lib/reliability/alerts';
 import { ReliabilityExportButton } from '@/app/components/reliability/ReliabilityExportButton';
 
 export const metadata: Metadata = {
@@ -15,6 +16,7 @@ export const metadata: Metadata = {
 };
 
 const DAY_MS = 24 * 60 * 60 * 1000;
+const HOUR_MS = 60 * 60 * 1000;
 
 function getStatusBadgeVariant(status: SloStatus) {
   switch (status) {
@@ -31,6 +33,17 @@ function getStatusBadgeVariant(status: SloStatus) {
 function getStatusLabel(status: SloStatus) {
   if (status === 'no_data') return 'NO DATA';
   return status.toUpperCase();
+}
+
+function getAlertBadgeVariant(severity: ReliabilityAlertSeverity) {
+  switch (severity) {
+    case 'critical':
+    case 'warning':
+      return 'destructive' as const;
+    case 'info':
+    default:
+      return 'outline' as const;
+  }
 }
 
 export default async function ReliabilityPage() {
@@ -57,37 +70,46 @@ export default async function ReliabilityPage() {
   const userId = session.user.id;
   const sevenDaysAgo = new Date(Date.now() - 7 * DAY_MS).toISOString();
   const oneDayAgo = new Date(Date.now() - DAY_MS).toISOString();
+  const oneHourAgo = new Date(Date.now() - HOUR_MS).toISOString();
 
-  const [totalEventsResult, failedEventsResult, aiTotalResult, aiFailureResult] = await Promise.all([
-    supabase
-      .from('audit_events')
-      .select('id', { count: 'exact', head: true })
-      .eq('actor_id', userId)
-      .gte('created_at', sevenDaysAgo),
-    supabase
-      .from('audit_events')
-      .select('id', { count: 'exact', head: true })
-      .eq('actor_id', userId)
-      .eq('status', 'failure')
-      .gte('created_at', sevenDaysAgo),
-    supabase
-      .from('audit_events')
-      .select('id', { count: 'exact', head: true })
-      .eq('actor_id', userId)
-      .eq('action', 'ai.summary.generate')
-      .gte('created_at', oneDayAgo),
-    supabase
-      .from('audit_events')
-      .select('id', { count: 'exact', head: true })
-      .eq('actor_id', userId)
-      .eq('action', 'ai.summary.generate')
-      .eq('status', 'failure')
-      .gte('created_at', oneDayAgo),
-  ]);
+  const [totalEventsResult, failedEventsResult, failedLastHourResult, aiTotalResult, aiFailureResult] =
+    await Promise.all([
+      supabase
+        .from('audit_events')
+        .select('id', { count: 'exact', head: true })
+        .eq('actor_id', userId)
+        .gte('created_at', sevenDaysAgo),
+      supabase
+        .from('audit_events')
+        .select('id', { count: 'exact', head: true })
+        .eq('actor_id', userId)
+        .eq('status', 'failure')
+        .gte('created_at', sevenDaysAgo),
+      supabase
+        .from('audit_events')
+        .select('id', { count: 'exact', head: true })
+        .eq('actor_id', userId)
+        .eq('status', 'failure')
+        .gte('created_at', oneHourAgo),
+      supabase
+        .from('audit_events')
+        .select('id', { count: 'exact', head: true })
+        .eq('actor_id', userId)
+        .eq('action', 'ai.summary.generate')
+        .gte('created_at', oneDayAgo),
+      supabase
+        .from('audit_events')
+        .select('id', { count: 'exact', head: true })
+        .eq('actor_id', userId)
+        .eq('action', 'ai.summary.generate')
+        .eq('status', 'failure')
+        .gte('created_at', oneDayAgo),
+    ]);
 
   const queryErrors = [
     totalEventsResult.error,
     failedEventsResult.error,
+    failedLastHourResult.error,
     aiTotalResult.error,
     aiFailureResult.error,
   ].filter(Boolean);
@@ -106,6 +128,7 @@ export default async function ReliabilityPage() {
 
   const totalEventsLast7d = totalEventsResult.count ?? 0;
   const failedEventsLast7d = failedEventsResult.count ?? 0;
+  const failedEventsLast1h = failedLastHourResult.count ?? 0;
   const aiTotalLast24h = aiTotalResult.count ?? 0;
   const aiFailureLast24h = aiFailureResult.count ?? 0;
 
@@ -125,6 +148,14 @@ export default async function ReliabilityPage() {
     warningDelta: 0.02,
   });
 
+  const alerts = generateReliabilityAlerts({
+    totalEventsLast7d,
+    failedEventsLast7d,
+    failedEventsLast1h,
+    aiTotalLast24h,
+    aiFailureLast24h,
+  });
+
   const report = {
     generatedAt: new Date().toISOString(),
     actorId: userId,
@@ -135,6 +166,7 @@ export default async function ReliabilityPage() {
     counters: {
       totalEventsLast7d,
       failedEventsLast7d,
+      failedEventsLast1h,
       aiTotalLast24h,
       aiFailureLast24h,
     },
@@ -142,6 +174,7 @@ export default async function ReliabilityPage() {
       platformSlo,
       aiSlo,
     },
+    alerts,
   };
 
   logger.info({
@@ -151,6 +184,7 @@ export default async function ReliabilityPage() {
     data: {
       platformStatus: platformSlo.status,
       aiStatus: aiSlo.status,
+        alertCount: alerts.length,
     },
   });
 
@@ -204,6 +238,33 @@ export default async function ReliabilityPage() {
             </CardContent>
           </Card>
         </div>
+
+        <Card>
+          <CardHeader>
+            <CardTitle>Active Alerts</CardTitle>
+            <CardDescription>
+              Threshold-based alerts derived from audit event failure patterns.
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-3">
+              {alerts.map((alert) => (
+                <div key={alert.code} className="rounded-lg border p-4">
+                  <div className="flex items-center justify-between gap-3">
+                    <h3 className="font-medium">{alert.title}</h3>
+                    <Badge variant={getAlertBadgeVariant(alert.severity)}>
+                      {alert.severity.toUpperCase()}
+                    </Badge>
+                  </div>
+                  <p className="text-sm text-muted-foreground mt-2">{alert.description}</p>
+                  <p className="text-sm mt-2">
+                    <span className="font-medium">Recommended action:</span> {alert.recommendedAction}
+                  </p>
+                </div>
+              ))}
+            </div>
+          </CardContent>
+        </Card>
       </div>
     </DashboardShell>
   );
