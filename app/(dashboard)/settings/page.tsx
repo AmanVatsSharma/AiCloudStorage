@@ -1,15 +1,35 @@
-import { FeaturePlaceholderPage } from "@/app/components/common/FeaturePlaceholderPage";
+import { DashboardShell } from '@/components/layout/DashboardShell';
+import { StoragePolicyForm } from '@/app/components/settings/StoragePolicyForm';
+import { createServerClient } from '@/lib/supabase/server';
+import { redirect } from 'next/navigation';
+import { Metadata } from 'next';
 
-export default function SettingsPage() {
+export const metadata: Metadata = {
+  title: 'Settings - AI Cloud Storage',
+  description: 'Configure storage policy and governance defaults.',
+};
+
+export default async function SettingsPage() {
+  const supabase = await createServerClient();
+  const {
+    data: { session },
+  } = await supabase.auth.getSession();
+
+  if (!session) {
+    redirect('/login');
+  }
+
   return (
-    <FeaturePlaceholderPage
-      title="Settings"
-      summary="Configure tenant-level security, storage defaults, and integrations."
-      bullets={[
-        "Organization and workspace security policies",
-        "Default retention and sharing controls",
-        "Identity provider and webhook integration settings",
-      ]}
-    />
+    <DashboardShell>
+      <div className="space-y-6">
+        <div>
+          <h1 className="text-3xl font-bold tracking-tight">Settings</h1>
+          <p className="text-muted-foreground mt-2">
+            Configure baseline storage governance controls for your account.
+          </p>
+        </div>
+        <StoragePolicyForm userId={session.user.id} />
+      </div>
+    </DashboardShell>
   );
 }
