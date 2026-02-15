@@ -25,6 +25,7 @@ import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Label } from '@/components/ui/label';
 import { getUserErrorMessage } from '@/lib/errors';
 import { logger } from '@/lib/logger';
+import { trackAuditEvent } from '@/lib/audit';
 
 type FileItem = {
   id: string;
@@ -144,6 +145,17 @@ export function FileShareDialog({
         title: 'Share link generated',
         description: 'Your file share link has been created successfully',
       });
+
+      await trackAuditEvent({
+        action: 'file.share.create',
+        resourceType: 'file',
+        resourceId: file.id,
+        details: {
+          shareId,
+          isPublic: shareSettings.isPublic,
+          accessLevel: shareSettings.accessLevel,
+        },
+      });
     } catch (error: unknown) {
       logger.error({
         traceId,
@@ -159,6 +171,18 @@ export function FileShareDialog({
         title: 'Error',
         description: getUserErrorMessage(error, 'Failed to generate share link'),
         variant: 'destructive',
+      });
+
+      await trackAuditEvent({
+        action: 'file.share.create',
+        resourceType: 'file',
+        resourceId: file.id,
+        status: 'failure',
+        details: {
+          isPublic: shareSettings.isPublic,
+          accessLevel: shareSettings.accessLevel,
+          reason: error instanceof Error ? error.message : String(error),
+        },
       });
     } finally {
       setIsLoading(false);

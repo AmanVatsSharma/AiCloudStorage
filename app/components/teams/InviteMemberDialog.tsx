@@ -18,6 +18,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { getUserErrorMessage } from '@/lib/errors';
 import { logger } from '@/lib/logger';
+import { trackAuditEvent } from '@/lib/audit';
 
 interface InviteMemberDialogProps {
   teamId: string;
@@ -79,6 +80,17 @@ export function InviteMemberDialog({
         title: 'Success',
         description: `User added to ${teamName}`,
       });
+
+      await trackAuditEvent({
+        action: 'team.member.add',
+        resourceType: 'team',
+        resourceId: teamId,
+        details: {
+          invitedEmail: email.toLowerCase(),
+          actorId: userId,
+        },
+        teamId,
+      });
       
       // Reset and close
       setEmail('');
@@ -103,6 +115,19 @@ export function InviteMemberDialog({
         title: 'Error',
         description: getUserErrorMessage(error, 'Failed to invite member'),
         variant: 'destructive',
+      });
+
+      await trackAuditEvent({
+        action: 'team.member.add',
+        resourceType: 'team',
+        resourceId: teamId,
+        status: 'failure',
+        details: {
+          invitedEmail: email.toLowerCase(),
+          actorId: userId,
+          reason: error instanceof Error ? error.message : String(error),
+        },
+        teamId,
       });
     } finally {
       setLoading(false);

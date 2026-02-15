@@ -20,6 +20,7 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { logger } from '@/lib/logger';
+import { trackAuditEvent } from '@/lib/audit';
 
 interface HeaderProps {
   children?: React.ReactNode;
@@ -77,6 +78,16 @@ export function Header({ children }: HeaderProps) {
 
   const handleSignOut = async () => {
     try {
+      const { data: userData } = await supabase.auth.getUser();
+      await trackAuditEvent({
+        action: 'auth.signout',
+        resourceType: 'user',
+        resourceId: userData.user?.id,
+        details: {
+          entrypoint: 'header-menu',
+        },
+      });
+
       await supabase.auth.signOut();
       logger.info({
         traceId,

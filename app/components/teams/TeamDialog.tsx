@@ -20,6 +20,7 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { getUserErrorMessage } from '@/lib/errors';
 import { logger } from '@/lib/logger';
+import { trackAuditEvent } from '@/lib/audit';
 
 interface TeamData {
   id?: string;
@@ -86,9 +87,19 @@ export function TeamDialog({ userId, team, onSuccess, trigger }: TeamDialogProps
           title: 'Success',
           description: 'Team updated successfully',
         });
+
+        await trackAuditEvent({
+          action: 'team.update',
+          resourceType: 'team',
+          resourceId: team.id,
+          details: {
+            teamName: formData.name,
+            ownerId: userId,
+          },
+        });
       } else {
         // Create new team using the new database function
-        const { error } = await supabase
+        const { data: teamId, error } = await supabase
           .rpc('create_team_with_owner', {
             p_name: formData.name,
             p_description: formData.description || null,
@@ -100,6 +111,16 @@ export function TeamDialog({ userId, team, onSuccess, trigger }: TeamDialogProps
         toast({
           title: 'Success',
           description: 'Team created successfully',
+        });
+
+        await trackAuditEvent({
+          action: 'team.create',
+          resourceType: 'team',
+          resourceId: typeof teamId === 'string' ? teamId : undefined,
+          details: {
+            teamName: formData.name,
+            ownerId: userId,
+          },
         });
       }
       
@@ -129,6 +150,17 @@ export function TeamDialog({ userId, team, onSuccess, trigger }: TeamDialogProps
         title: 'Error',
         description: getUserErrorMessage(error, 'Failed to save team'),
         variant: 'destructive',
+      });
+
+      await trackAuditEvent({
+        action: isEditing ? 'team.update' : 'team.create',
+        resourceType: 'team',
+        resourceId: team?.id,
+        status: 'failure',
+        details: {
+          ownerId: userId,
+          reason: error instanceof Error ? error.message : String(error),
+        },
       });
     } finally {
       setLoading(false);
