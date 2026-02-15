@@ -35,6 +35,12 @@ This module captures operational response procedures for reliability and complia
 - `docs/API_RELIABILITY_ALERTS.md`
 - `docs/API_HEALTH.md`
 
+## Security Validation Automation
+- Evidence generator script:
+  - `supabase/scripts/generate_security_validation_evidence.mjs`
+- Runbook:
+  - `supabase/SECURITY_VALIDATION_RUNBOOK.md`
+
 ## Operations Flowchart
 ```mermaid
 flowchart TD

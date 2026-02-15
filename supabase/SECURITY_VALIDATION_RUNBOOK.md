@@ -25,6 +25,14 @@ Operationalize security migration validation for staging and production before/a
 1. Confirm migrations are applied in target environment.
 2. Confirm backup snapshot completed and restorable.
 3. Confirm incident response on-call is aware of rollout window.
+4. Generate fresh evidence skeleton from template:
+   ```bash
+   node supabase/scripts/generate_security_validation_evidence.mjs \
+     --environment staging \
+     --validator platform.engineer@company.com \
+     --approver security.lead@company.com \
+     --ticket REL-1234
+   ```
 
 ## Execution Steps
 1. Open Supabase SQL editor (or `psql`) on target environment.
