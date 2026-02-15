@@ -16,6 +16,8 @@
 - Reliability insights available through UI and authenticated API export path:
   - `/reliability`
   - `/api/reliability/alerts`
+- Operational readiness probe endpoint:
+  - `/api/health`
 
 ---
 

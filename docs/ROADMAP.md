@@ -21,6 +21,7 @@
 - [x] Added security baseline validation runbook and SQL verification script
 - [x] Added authenticated reliability alerts API and SIEM integration guide
 - [x] Added reliability alerts API reference documentation
+- [x] Added health/readiness API endpoint and probe documentation
 - [ ] Validate security baseline migration in staging and production
 
 ## Phase 1: Project Setup and Core Infrastructure

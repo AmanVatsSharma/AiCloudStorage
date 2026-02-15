@@ -25,6 +25,12 @@ This module captures operational response procedures for reliability and complia
   - `app/api/reliability/alerts/route.ts`
 - Threshold status should be reviewed during incident triage and weekly ops review.
 
+## Health & Probes
+- Health endpoint:
+  - `GET /api/health`
+  - reference: `docs/API_HEALTH.md`
+- Use for deployment smoke probes and uptime checks.
+
 ## Operations Flowchart
 ```mermaid
 flowchart TD
