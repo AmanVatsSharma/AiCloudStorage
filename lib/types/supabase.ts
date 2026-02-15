@@ -593,6 +593,18 @@ export interface Database {
         };
         Returns: boolean;
       };
+      accept_organization_invitation: {
+        Args: {
+          p_token: string;
+          p_user_id: string;
+          p_user_email: string;
+        };
+        Returns: Array<{
+          organization_id: string;
+          organization_name: string;
+          assigned_role: OrganizationRole;
+        }>;
+      };
       [key: string]: {
         Args: Record<string, unknown>;
         Returns: unknown;

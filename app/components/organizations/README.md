@@ -27,6 +27,7 @@ This module provides enterprise tenancy entry points:
 Route:
 - `/organizations` (`app/(dashboard)/organizations/page.tsx`)
 - `/organizations/[organizationId]/members` (`app/(dashboard)/organizations/[organizationId]/members/page.tsx`)
+- `/organizations/invitations/[token]` (`app/organizations/invitations/[token]/page.tsx`)
 
 ## Organization Workflow Flowchart
 ```mermaid
@@ -46,6 +47,10 @@ flowchart TD
   M -->|Yes| N[Load members + pending invites]
   N --> O[Role updates/remove/revoke through secured RPCs]
   O --> P[Emit audit events and refresh]
+  K --> Q[Share invite URL]
+  Q --> R[Invitee opens token route]
+  R --> S[accept_organization_invitation RPC]
+  S --> T[Membership upsert + invitation status accepted]
 ```
 
 ## Next Steps

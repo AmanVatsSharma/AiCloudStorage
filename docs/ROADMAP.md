@@ -10,6 +10,7 @@
 - [x] Added AI summarization API foundation with OpenAI + heuristic fallback
 - [x] Added organization IAM schema foundation and organizations management UI baseline
 - [x] Added organization member-management workflow with role updates and invitation revocation
+- [x] Added secure organization invitation acceptance flow with token-based onboarding
 - [x] Added storage governance policy settings baseline
 - [x] Added AI tools UI baseline (summary workbench)
 - [x] Added reliability dashboard with SLO indicator tracking and export

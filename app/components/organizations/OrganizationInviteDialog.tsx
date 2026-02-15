@@ -122,9 +122,23 @@ export function OrganizationInviteDialog({
         },
       });
 
+      const invitationUrl = `${window.location.origin}/organizations/invitations/${token}`;
+      try {
+        await navigator.clipboard.writeText(invitationUrl);
+      } catch (clipboardError: unknown) {
+        logger.warn({
+          traceId,
+          scope: 'organization-invite-dialog',
+          message: 'Failed to copy invitation URL to clipboard.',
+          data: {
+            clipboardError: clipboardError instanceof Error ? clipboardError.message : clipboardError,
+          },
+        });
+      }
+
       toast({
         title: 'Invitation created',
-        description: `${normalizedEmail} has been invited to ${organizationName}.`,
+        description: `${normalizedEmail} has been invited. Invitation link copied to clipboard.`,
       });
       setEmail('');
       setRole('member');
