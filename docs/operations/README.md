@@ -24,6 +24,8 @@ This module captures operational response procedures for reliability and complia
   - consolidated artifact checklist for security, readiness, and release-governance evidence.
 - `ARTIFACTS_MATRIX.md`
   - phase-by-phase mapping of templates, scripts, and sample artifacts.
+- `CHANGELOG.md`
+  - sprint-based log of operations-doc artifact additions and updates.
 
 ## Alerting Inputs
 - Reliability alert baseline uses audit-event thresholds from:

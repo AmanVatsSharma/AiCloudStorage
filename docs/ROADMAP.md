@@ -39,6 +39,7 @@
 - [x] Added operations artifacts matrix for release lifecycle evidence mapping
 - [x] Added JSON artifact validation automation for sample/evidence contracts
 - [x] Added JSON sample schema requirements documentation aligned with validation script
+- [x] Added operations documentation changelog for sprint-by-sprint artifact tracking
 - [ ] Validate security baseline migration in staging and production
 
 ## Phase 1: Project Setup and Core Infrastructure

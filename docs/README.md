@@ -67,3 +67,4 @@ npm run ops:validate-json
 - `operations/RELEASE_VALIDATION_TEMPLATE.md`
 - `operations/EVIDENCE_PACK_CHECKLIST.md`
 - `operations/ARTIFACTS_MATRIX.md`
+- `operations/CHANGELOG.md`
