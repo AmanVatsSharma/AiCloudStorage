@@ -2,11 +2,24 @@ import { NextRequest, NextResponse } from 'next/server';
 import { logger } from '@/lib/logger';
 import { summarizeTextHeuristic, truncateForModel } from '@/lib/ai/summarizer';
 import { estimateAiUsage } from '@/lib/ai/cost-estimator';
+import { applySlidingWindowLimit } from '@/lib/rate-limit/sliding-window';
 
 type SummarizeRequest = {
   text?: string;
   maxSentences?: number;
 };
+
+const AI_SUMMARY_RATE_LIMIT = {
+  maxRequests: 20,
+  windowMs: 60_000,
+};
+
+function resolveRequestKey(request: NextRequest): string {
+  const ipHeader = request.headers.get('x-forwarded-for') || request.headers.get('cf-connecting-ip');
+  const ip = ipHeader?.split(',')[0]?.trim() || 'unknown-ip';
+  const userAgent = request.headers.get('user-agent') || 'unknown-ua';
+  return `${ip}:${userAgent.slice(0, 40)}`;
+}
 
 async function summarizeWithOpenAI(text: string, maxSentences: number): Promise<string> {
   const apiKey = process.env.OPENAI_API_KEY;
@@ -52,6 +65,38 @@ async function summarizeWithOpenAI(text: string, maxSentences: number): Promise<
 
 export async function POST(request: NextRequest) {
   const traceId = `ai-summarize_${Date.now()}`;
+  const requestKey = resolveRequestKey(request);
+
+  const rateLimit = applySlidingWindowLimit({
+    key: requestKey,
+    maxRequests: AI_SUMMARY_RATE_LIMIT.maxRequests,
+    windowMs: AI_SUMMARY_RATE_LIMIT.windowMs,
+  });
+
+  if (!rateLimit.allowed) {
+    logger.warn({
+      traceId,
+      scope: 'ai-summarize-route',
+      message: 'AI summarize request blocked by rate limiter.',
+      data: {
+        requestKey,
+        retryAfterSeconds: rateLimit.retryAfterSeconds,
+      },
+    });
+
+    return NextResponse.json(
+      {
+        error: 'Rate limit exceeded for summarization requests. Please retry shortly.',
+        retryAfterSeconds: rateLimit.retryAfterSeconds,
+      },
+      {
+        status: 429,
+        headers: {
+          'Retry-After': String(rateLimit.retryAfterSeconds),
+        },
+      }
+    );
+  }
 
   try {
     const body = (await request.json()) as SummarizeRequest;
@@ -110,6 +155,9 @@ export async function POST(request: NextRequest) {
       provider,
       maxSentences,
       usage,
+      rateLimit: {
+        remaining: rateLimit.remaining,
+      },
     });
   } catch (error: unknown) {
     logger.error({

@@ -9,6 +9,7 @@ Current implementation:
   - calls `/api/ai/summarize`,
   - displays provider and summary output,
   - displays estimated token/cost telemetry,
+  - handles rate-limit responses with explicit retry messaging,
   - emits audit events for success/failure.
 
 Route:
@@ -21,7 +22,7 @@ flowchart TD
   B --> C[Submit to /api/ai/summarize]
   C --> D{API success?}
   D -->|Yes| E[Render summary + provider badge + usage telemetry]
-  D -->|No| F[Show error toast]
+  D -->|No| F[Show error toast and retry guidance]
   E --> G[Track audit success event]
   F --> H[Track audit failure event]
 ```

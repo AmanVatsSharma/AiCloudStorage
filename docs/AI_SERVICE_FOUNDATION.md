@@ -40,6 +40,7 @@ Response:
 1. Try OpenAI when `OPENAI_API_KEY` is configured.
 2. If OpenAI fails, gracefully fallback to deterministic heuristic summarizer.
 3. Emit structured logs for both success and fallback/error paths.
+4. Apply in-memory sliding-window rate limit to summarize endpoint for abuse protection.
 
 ## Supporting Utilities
 - `lib/ai/summarizer.ts`
@@ -48,6 +49,8 @@ Response:
 - `lib/ai/cost-estimator.ts`
   - token estimation heuristics
   - provider-specific estimated cost envelope
+- `lib/rate-limit/sliding-window.ts`
+  - deterministic in-memory rate limiter utility
 
 ## Test Coverage
 - `lib/ai/summarizer.test.ts`
@@ -57,13 +60,17 @@ Response:
 - `lib/ai/cost-estimator.test.ts`
   - token estimate behavior
   - provider cost estimation behavior
+- `lib/rate-limit/sliding-window.test.ts`
+  - allow/block/retry behavior under windowed request pressure
 
 ## AI Summary Flowchart
 ```mermaid
 flowchart TD
   A[POST /api/ai/summarize] --> B{Valid request text?}
   B -->|No| C[400 bad request]
-  B -->|Yes| D{OPENAI_API_KEY configured?}
+  B -->|Yes| Z{Rate limit available?}
+  Z -->|No| C2[429 rate limited]
+  Z -->|Yes| D{OPENAI_API_KEY configured?}
   D -->|No| E[Heuristic summary]
   D -->|Yes| F[Try OpenAI completion]
   F -->|Success| G[Return OpenAI summary]

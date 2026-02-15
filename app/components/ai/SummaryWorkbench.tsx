@@ -63,6 +63,15 @@ export function SummaryWorkbench({ userId }: SummaryWorkbenchProps) {
 
       if (!response.ok) {
         const body = await response.json().catch(() => ({}));
+        if (response.status === 429) {
+          const retryAfter = Number(body?.retryAfterSeconds || 0);
+          const retryMessage =
+            retryAfter > 0
+              ? `Rate limited. Retry in about ${retryAfter} seconds.`
+              : 'Rate limited. Please retry shortly.';
+          throw new Error(retryMessage);
+        }
+
         throw new Error(body?.error || `Summarization failed (${response.status})`);
       }
 
