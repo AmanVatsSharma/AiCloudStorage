@@ -62,3 +62,4 @@ npm run ops:probe -- \
 - `operations/SIEM_INTEGRATION.md`
 - `operations/RELEASE_VALIDATION_TEMPLATE.md`
 - `operations/EVIDENCE_PACK_CHECKLIST.md`
+- `operations/ARTIFACTS_MATRIX.md`

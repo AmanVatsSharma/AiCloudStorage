@@ -22,6 +22,8 @@ This module captures operational response procedures for reliability and complia
   - sample ticket: `docs/samples/release_validation_ticket_sample.md`
 - `EVIDENCE_PACK_CHECKLIST.md`
   - consolidated artifact checklist for security, readiness, and release-governance evidence.
+- `ARTIFACTS_MATRIX.md`
+  - phase-by-phase mapping of templates, scripts, and sample artifacts.
 
 ## Alerting Inputs
 - Reliability alert baseline uses audit-event thresholds from:

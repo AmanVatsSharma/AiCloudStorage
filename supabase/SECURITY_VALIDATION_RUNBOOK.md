@@ -77,6 +77,8 @@ Attach to release ticket:
   - `docs/operations/RELEASE_VALIDATION_TEMPLATE.md`
 - Consolidated evidence pack checklist:
   - `docs/operations/EVIDENCE_PACK_CHECKLIST.md`
+- Operations artifacts matrix:
+  - `docs/operations/ARTIFACTS_MATRIX.md`
 
 ## Validation Flowchart
 ```mermaid
