@@ -71,6 +71,8 @@ Attach to release ticket:
   - `SECURITY_VALIDATION_EVIDENCE_TEMPLATE.md`
   - `SECURITY_VALIDATION_EVIDENCE_TEMPLATE.json`
   - (optional reference) `SECURITY_VALIDATION_EVIDENCE_SAMPLE.json`
+- Release ticket checklist template:
+  - `docs/operations/RELEASE_VALIDATION_TEMPLATE.md`
 
 ## Validation Flowchart
 ```mermaid

@@ -17,6 +17,8 @@ This module captures operational response procedures for reliability and complia
 - `SIEM_INTEGRATION.md`
   - API polling model for reliability alerts.
   - Routing guidance for warning/critical alert severities.
+- `RELEASE_VALIDATION_TEMPLATE.md`
+  - release-ticket checklist for security, reliability, and operational evidence capture.
 
 ## Alerting Inputs
 - Reliability alert baseline uses audit-event thresholds from:

@@ -48,3 +48,4 @@ npm run security:evidence -- \
 - `operations/INCIDENT_RESPONSE_RUNBOOK.md`
 - `operations/DISASTER_RECOVERY_RUNBOOK.md`
 - `operations/SIEM_INTEGRATION.md`
+- `operations/RELEASE_VALIDATION_TEMPLATE.md`
