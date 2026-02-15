@@ -1,5 +1,14 @@
 # Development Roadmap and Checklist
 
+## Current Hardening Status (2026-02)
+- [x] Canonicalized Supabase type usage across app modules
+- [x] Added structured logging and shared error-normalization utilities
+- [x] Standardized auth redirects and added auth callback + forgot-password routes
+- [x] Removed broken dashboard navigation by adding placeholder route pages
+- [x] Added initial module docs + flowcharts for files and teams modules
+- [x] Added enterprise security baseline migration (RLS + storage prefix isolation)
+- [ ] Validate security baseline migration in staging and production
+
 ## Phase 1: Project Setup and Core Infrastructure
 - [x] Initialize project structure
 - [x] Set up Next.js frontend
