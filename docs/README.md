@@ -109,3 +109,8 @@ npm run ops:release-ticket -- \
 - `operations/EVIDENCE_PACK_CHECKLIST.md`
 - `operations/ARTIFACTS_MATRIX.md`
 - `operations/CHANGELOG.md`
+
+## User Documentation
+- `user/USER_GUIDE.md`
+- `user/FEATURES.md`
+- `user/FAQ.md`

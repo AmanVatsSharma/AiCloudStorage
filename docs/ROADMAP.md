@@ -55,6 +55,7 @@
 - [x] Validate security baseline migration in staging and production
 - [x] Added storage bucket management API and settings UI with governance controls
 - [x] Added Dockerfile-based deployment baseline and deployment runbook
+- [x] Added user-facing documentation set (user guide, feature reference, FAQ)
 
 ## Phase 1: Project Setup and Core Infrastructure
 - [x] Initialize project structure
@@ -205,10 +206,10 @@
   - [x] Architecture overview
   - [x] API documentation
   - [x] Database schema
-- [ ] User documentation
-  - [ ] User guides
-  - [ ] Feature documentation
-  - [ ] FAQ
+- [x] User documentation
+  - [x] User guides
+  - [x] Feature documentation
+  - [x] FAQ
 - [ ] Developer documentation
   - [ ] SDK guides
   - [ ] Integration guides
