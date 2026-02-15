@@ -8,6 +8,7 @@ import { logger } from '@/lib/logger';
 import { useToast } from '@/components/ui/use-toast';
 import { getUserErrorMessage } from '@/lib/errors';
 import { FiBriefcase } from 'react-icons/fi';
+import { OrganizationInviteDialog } from '@/app/components/organizations/OrganizationInviteDialog';
 
 type OrganizationMembership = {
   id: string;
@@ -98,11 +99,21 @@ export function OrganizationList({ userId, refreshKey }: OrganizationListProps) 
     <div className="grid gap-4 md:grid-cols-2">
       {organizations.map((organization) => (
         <Card key={organization.id}>
-          <CardHeader className="pb-2">
-            <CardTitle className="text-base flex items-center justify-between">
-              <span>{organization.name}</span>
+          <CardHeader className="pb-2 space-y-3">
+            <CardTitle className="text-base flex items-center justify-between gap-2">
+              <span className="truncate">{organization.name}</span>
               <Badge variant="secondary">{organization.role}</Badge>
             </CardTitle>
+            {(organization.role === 'owner' || organization.role === 'admin') && (
+              <div className="flex justify-end">
+                <OrganizationInviteDialog
+                  organizationId={organization.id}
+                  organizationName={organization.name}
+                  actorUserId={userId}
+                  onSuccess={() => void fetchOrganizations()}
+                />
+              </div>
+            )}
           </CardHeader>
           <CardContent className="space-y-1 text-sm text-muted-foreground">
             <p>Slug: <span className="font-mono">{organization.slug}</span></p>

@@ -3,7 +3,8 @@
 ## Scope
 This module provides enterprise tenancy entry points:
 - creating organizations,
-- listing organization memberships for current user.
+- listing organization memberships for current user,
+- invitation management for owner/admin roles.
 
 ## Components
 - `OrganizationDialog.tsx`
@@ -12,6 +13,9 @@ This module provides enterprise tenancy entry points:
 - `OrganizationList.tsx`
   - fetches memberships via `get_user_organizations`.
   - renders role badges and organization metadata.
+- `OrganizationInviteDialog.tsx`
+  - creates invitations in `organization_invitations`.
+  - captures role + email + token and emits audit events.
 
 Route:
 - `/organizations` (`app/(dashboard)/organizations/page.tsx`)
@@ -27,9 +31,11 @@ flowchart TD
   F --> G{RPC success?}
   G -->|Yes| H[Emit audit success + refresh list]
   G -->|No| I[Emit audit failure + show error]
+  D --> J{Owner/Admin invite?}
+  J -->|Yes| K[Insert organization_invitations row]
+  K --> L[Emit invitation audit event]
 ```
 
 ## Next Steps
-- Add invitation workflow UI tied to `organization_invitations`.
 - Add role management screen for organization members.
 - Add organization-scoped settings and policy controls.
