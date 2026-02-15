@@ -50,6 +50,7 @@
 - [x] Added storage analytics sample artifact and JSON contract validation coverage
 - [x] Added advanced file search filters and metadata search support
 - [x] Added canonical database schema reference documentation with relationship map
+- [x] Added automated security baseline validation runner with JSON report output
 - [ ] Validate security baseline migration in staging and production
 
 ## Phase 1: Project Setup and Core Infrastructure

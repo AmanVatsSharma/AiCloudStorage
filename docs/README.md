@@ -17,6 +17,7 @@
 - `samples/health_response_sample.json`
 - `samples/ops_probe_output_sample.json`
 - `samples/storage_analytics_report_sample.json`
+- `samples/security_baseline_validation_report_sample.json`
 - `samples/release_validation_ticket_sample.md`
 
 ### Quickstart API Examples
@@ -39,6 +40,7 @@ curl -sS "https://<app-host>/api/health"
 - `../supabase/SECURITY_VALIDATION_EVIDENCE_TEMPLATE.json`
 - `../supabase/SECURITY_VALIDATION_EVIDENCE_SAMPLE.json`
 - `../supabase/scripts/generate_security_validation_evidence.mjs`
+- `../supabase/scripts/validate_security_baseline.mjs`
 - `../supabase/evidence/README.md`
 
 ```bash
@@ -54,6 +56,12 @@ npm run ops:probe -- \
   --base-url "https://<app-host>" \
   --scope global \
   --reliability-token "${RELIABILITY_ALERTS_API_TOKEN}"
+
+# Run security baseline checks against target database
+npm run security:validate -- \
+  --environment staging \
+  --connection-string "${SUPABASE_DB_URL}" \
+  --output "supabase/evidence/security-baseline-validation-staging.json"
 
 # Probe staging preset
 npm run ops:probe -- \

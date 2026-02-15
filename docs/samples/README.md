@@ -10,6 +10,7 @@ Examples:
 - `health_response_sample.json`
 - `ops_probe_output_sample.json`
 - `storage_analytics_report_sample.json`
+- `security_baseline_validation_report_sample.json`
 
 ## Usage Guidelines
 - Samples should be sanitized and non-sensitive.

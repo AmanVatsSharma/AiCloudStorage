@@ -13,6 +13,7 @@ This document defines top-level key requirements for JSON sample/evidence artifa
 | `docs/samples/health_response_sample.json` | `status`, `timestamp`, `checks` |
 | `docs/samples/ops_probe_output_sample.json` | `generatedAt`, `baseUrl`, `probes` |
 | `docs/samples/storage_analytics_report_sample.json` | `generatedAt`, `mode`, `actorId`, `report` |
+| `docs/samples/security_baseline_validation_report_sample.json` | `generatedAt`, `environment`, `overallStatus`, `checks` |
 | `supabase/SECURITY_VALIDATION_EVIDENCE_TEMPLATE.json` | `metadata`, `sqlVerification`, `decision` |
 | `supabase/SECURITY_VALIDATION_EVIDENCE_SAMPLE.json` | `metadata`, `sqlVerification`, `decision` |
 

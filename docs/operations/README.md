@@ -53,8 +53,11 @@ This module captures operational response procedures for reliability and complia
 ## Security Validation Automation
 - Evidence generator script:
   - `supabase/scripts/generate_security_validation_evidence.mjs`
+- Validation runner script:
+  - `supabase/scripts/validate_security_baseline.mjs`
 - npm shortcut:
   - `npm run security:evidence -- --environment staging --validator ... --approver ... --ticket ...`
+  - `npm run security:validate -- --environment staging --connection-string ... --output ...`
 - JSON artifact validation shortcut:
   - `npm run ops:validate-json`
 - Runbook:

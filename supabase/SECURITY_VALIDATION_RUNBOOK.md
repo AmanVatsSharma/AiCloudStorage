@@ -35,8 +35,16 @@ Operationalize security migration validation for staging and production before/a
    ```
 
 ## Execution Steps
-1. Open Supabase SQL editor (or `psql`) on target environment.
-2. Execute:
+1. Preferred automation path (recommended):
+   ```bash
+   npm run security:validate -- \
+     --environment staging \
+     --connection-string "${SUPABASE_DB_URL}" \
+     --output "supabase/evidence/security-baseline-validation-staging.json"
+   ```
+2. Manual SQL path (fallback):
+   - Open Supabase SQL editor (or `psql`) on target environment.
+   - Execute:
    - `supabase/scripts/security_baseline_validation.sql`
 3. Record output in rollout ticket:
    - RLS state table
