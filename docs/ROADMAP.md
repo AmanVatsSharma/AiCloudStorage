@@ -30,6 +30,7 @@
 - [x] Added npm shortcut for generating security validation evidence skeletons
 - [x] Added release validation ticket template for operational evidence capture
 - [x] Added reliability alerts API sample response artifact for integration testing
+- [x] Added health API sample response artifact for integration testing
 - [ ] Validate security baseline migration in staging and production
 
 ## Phase 1: Project Setup and Core Infrastructure

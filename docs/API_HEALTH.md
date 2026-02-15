@@ -34,3 +34,6 @@ Provide a lightweight readiness signal for uptime probes and deployment checks.
 - This endpoint does not require authentication.
 - Current checks focus on runtime configuration readiness.
 - AI services may still operate in degraded fallback mode when OpenAI key is not configured.
+
+Sample response artifact:
+- `docs/samples/health_response_sample.json`

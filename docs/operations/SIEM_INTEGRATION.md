@@ -31,6 +31,8 @@ Reference payload artifact:
 - Endpoint: `GET /api/health`
 - Purpose: deployment and uptime readiness checks.
 - Recommended cadence: 30-60 seconds for uptime probe, 5 minutes for readiness trend snapshots.
+- Sample payload:
+  - `docs/samples/health_response_sample.json`
 
 ### Health probe cURL
 ```bash
