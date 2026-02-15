@@ -18,6 +18,8 @@
 - `samples/ops_probe_output_sample.json`
 - `samples/storage_analytics_report_sample.json`
 - `samples/security_baseline_validation_report_sample.json`
+- `samples/security_baseline_validation_report_production_sample.json`
+- `samples/security_rollout_gate_summary_sample.json`
 - `samples/release_validation_ticket_sample.md`
 
 ### Quickstart API Examples
@@ -62,6 +64,12 @@ npm run security:validate -- \
   --environment staging \
   --connection-string "${SUPABASE_DB_URL}" \
   --output "supabase/evidence/security-baseline-validation-staging.json"
+
+# Validate staging + production reports before release go/no-go
+npm run security:gate -- \
+  --staging-report "supabase/evidence/security-baseline-validation-staging.json" \
+  --production-report "supabase/evidence/security-baseline-validation-production.json" \
+  --output "supabase/evidence/security-rollout-gate-summary.json"
 
 # Probe staging preset
 npm run ops:probe -- \

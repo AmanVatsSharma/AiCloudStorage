@@ -51,7 +51,21 @@ Operationalize security migration validation for staging and production before/a
    - helper function PASS/FAIL
    - forbidden policy PASS/FAIL
    - storage prefix policy presence
-4. If any FAIL appears:
+4. Repeat step #1 for production after staging validation passes:
+   ```bash
+   npm run security:validate -- \
+     --environment production \
+     --connection-string "${SUPABASE_DB_URL_PRODUCTION}" \
+     --output "supabase/evidence/security-baseline-validation-production.json"
+   ```
+5. Execute rollout gate check before final release approval:
+   ```bash
+   npm run security:gate -- \
+     --staging-report "supabase/evidence/security-baseline-validation-staging.json" \
+     --production-report "supabase/evidence/security-baseline-validation-production.json" \
+     --output "supabase/evidence/security-rollout-gate-summary.json"
+   ```
+6. If any FAIL appears:
    - stop rollout,
    - open Sev-2 engineering incident,
    - remediate and rerun validation script.

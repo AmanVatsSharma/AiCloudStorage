@@ -1,0 +1,16 @@
+{
+  "generatedAt": "2026-02-15T19:10:00.000Z",
+  "gateStatus": "PASS",
+  "environments": {
+    "staging": {
+      "reportStatus": "PASS",
+      "schemaValid": true,
+      "failures": []
+    },
+    "production": {
+      "reportStatus": "PASS",
+      "schemaValid": true,
+      "failures": []
+    }
+  }
+}

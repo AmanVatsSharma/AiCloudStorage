@@ -58,6 +58,7 @@ This module captures operational response procedures for reliability and complia
 - npm shortcut:
   - `npm run security:evidence -- --environment staging --validator ... --approver ... --ticket ...`
   - `npm run security:validate -- --environment staging --connection-string ... --output ...`
+  - `npm run security:gate -- --staging-report ... --production-report ... --output ...`
 - JSON artifact validation shortcut:
   - `npm run ops:validate-json`
 - Runbook:

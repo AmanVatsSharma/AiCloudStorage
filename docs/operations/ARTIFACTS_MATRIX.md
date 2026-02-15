@@ -13,6 +13,9 @@ This matrix maps templates, scripts, and sample artifacts to release lifecycle p
 | Security validation | Record security verification results | Template (md/json) | `supabase/SECURITY_VALIDATION_EVIDENCE_TEMPLATE.md` / `.json` |
 | Security validation | Reference expected completed shape | Sample | `supabase/SECURITY_VALIDATION_EVIDENCE_SAMPLE.json` |
 | Security validation | Validate report payload contract | Sample | `docs/samples/security_baseline_validation_report_sample.json` |
+| Security validation | Validate production report payload contract | Sample | `docs/samples/security_baseline_validation_report_production_sample.json` |
+| Security validation | Enforce staging+production release gate | Script | `npm run security:gate` (`scripts/ops/validate_security_rollout_gate.mjs`) |
+| Security validation | Reference expected gate summary shape | Sample | `docs/samples/security_rollout_gate_summary_sample.json` |
 | Security validation | Validate JSON artifact contract quickly | Script | `npm run ops:validate-json` (`scripts/ops/validate_json_artifacts.mjs`) |
 | Security/Integration docs | Define required sample artifact keys | Specification | `docs/samples/SCHEMA_REQUIREMENTS.md` |
 | Operational checks | Verify readiness baseline | API | `GET /api/health` |

@@ -93,6 +93,7 @@ flowchart TD
 - Runbook: `SECURITY_VALIDATION_RUNBOOK.md`
 - SQL checks: `scripts/security_baseline_validation.sql`
 - Automated validator: `scripts/validate_security_baseline.mjs`
+- Rollout gate validator: `../scripts/ops/validate_security_rollout_gate.mjs`
 - Evidence template: `SECURITY_VALIDATION_EVIDENCE_TEMPLATE.md`
 - JSON template: `SECURITY_VALIDATION_EVIDENCE_TEMPLATE.json`
 - Sample evidence: `SECURITY_VALIDATION_EVIDENCE_SAMPLE.json`

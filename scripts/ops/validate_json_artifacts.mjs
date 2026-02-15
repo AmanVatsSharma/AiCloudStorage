@@ -14,6 +14,13 @@ const REQUIRED_KEYS_BY_FILE = {
     'overallStatus',
     'checks',
   ],
+  'docs/samples/security_baseline_validation_report_production_sample.json': [
+    'generatedAt',
+    'environment',
+    'overallStatus',
+    'checks',
+  ],
+  'docs/samples/security_rollout_gate_summary_sample.json': ['generatedAt', 'gateStatus', 'environments'],
   'supabase/SECURITY_VALIDATION_EVIDENCE_TEMPLATE.json': ['metadata', 'sqlVerification', 'decision'],
   'supabase/SECURITY_VALIDATION_EVIDENCE_SAMPLE.json': ['metadata', 'sqlVerification', 'decision'],
 };
